@@ -4,7 +4,7 @@
 <html>
 
 <head>
-  <title>dotnet</title>
+  <title>Raytracer demo on Net7 wasm</title>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="modulepreload" href="./main.js" />
@@ -12,12 +12,20 @@
 </head>
 
 <body>
-    <button id="btnRender" onclick="globalThis.onClick()" disabled="true">Render</button>
-    <br/><br/>
-    <canvas id="out" width="300" height="300" style="border: dotted;"></canvas>
-    <script type='module' src="./main.js"></script>
-    <br/><br/>
-    Original credits to: http://www.nokola.com/Raytracer/HowToBuild.aspx
+  <h1>Raytracer demo on Net7 wasm</h1>
+  <button id="btnRender" onclick="globalThis.onClick()" disabled="true">Render</button>
+  <br /><br />
+  <canvas id="out" width="300" height="300" style="border: dotted;"></canvas>
+  <script type='module' src="./main.js"></script>
+  <br /><br />
+  <p>
+    Code at: <a href="https://github.com/pavelsavara/dotnet-wasm-raytracer">https://github.com/pavelsavara/dotnet-wasm-raytracer</a>
+  </p>
+  <p>
+    Original credits to: <a href="http://www.nokola.com/Raytracer/HowToBuild.aspx">http://www.nokola.com/Raytracer/HowToBuild.aspx</a>
+  </p>
+  
+  
 </body>
 
 </html>
