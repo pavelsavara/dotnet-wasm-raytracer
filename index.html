@@ -12,10 +12,12 @@
 </head>
 
 <body>
-    <button onclick="globalThis.onClick()">Render</button>
-    <br/>
+    <button id="btnRender" onclick="globalThis.onClick()" disabled="true">Render</button>
+    <br/><br/>
     <canvas id="out" width="300" height="300" style="border: dotted;"></canvas>
     <script type='module' src="./main.js"></script>
+    <br/><br/>
+    Original credits to: http://www.nokola.com/Raytracer/HowToBuild.aspx
 </body>
 
 </html>

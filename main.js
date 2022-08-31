@@ -10,6 +10,7 @@ function renderCanvas(rgbaView) {
     const image = new ImageData(clamped, 300, 300);
     ctx.putImageData(image, 0, 0);
     rgbaView.dispose();
+    canvas.style = "";
 }
 
 const { setModuleImports, getAssemblyExports, getConfig } = await dotnet.create();
@@ -19,3 +20,5 @@ const exports = await getAssemblyExports(config.mainAssemblyName);
 globalThis.onClick = exports.MainJS.OnClick;
 
 await dotnet.run();
+const btnRender = document.getElementById("btnRender");
+btnRender.disabled = false;
