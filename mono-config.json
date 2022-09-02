@@ -9,6 +9,18 @@
     },
     {
       "behavior": "assembly",
+      "name": "System.Collections.dll"
+    },
+    {
+      "behavior": "assembly",
+      "name": "System.ComponentModel.Primitives.dll"
+    },
+    {
+      "behavior": "assembly",
+      "name": "System.ComponentModel.TypeConverter.dll"
+    },
+    {
+      "behavior": "assembly",
       "name": "System.Console.dll"
     },
     {
@@ -17,11 +29,23 @@
     },
     {
       "behavior": "assembly",
-      "name": "System.Linq.dll"
+      "name": "System.Drawing.dll"
+    },
+    {
+      "behavior": "assembly",
+      "name": "System.Drawing.Primitives.dll"
     },
     {
       "behavior": "assembly",
       "name": "System.Memory.dll"
+    },
+    {
+      "behavior": "assembly",
+      "name": "System.Numerics.Vectors.dll"
+    },
+    {
+      "behavior": "assembly",
+      "name": "System.ObjectModel.dll"
     },
     {
       "behavior": "assembly",
@@ -42,10 +66,6 @@
     {
       "behavior": "assembly",
       "name": "System.Runtime.InteropServices.JavaScript.dll"
-    },
-    {
-      "behavior": "assembly",
-      "name": "System.Threading.Channels.dll"
     },
     {
       "behavior": "assembly",
