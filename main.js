@@ -7,7 +7,7 @@ function renderCanvas(rgbaView) {
     const canvas = document.getElementById("out");
     const ctx = canvas.getContext('2d');
     const clamped = new Uint8ClampedArray(rgbaView.slice());
-    const image = new ImageData(clamped, 300, 300);
+    const image = new ImageData(clamped, 640, 480);
     ctx.putImageData(image, 0, 0);
     rgbaView.dispose();
     canvas.style = "";

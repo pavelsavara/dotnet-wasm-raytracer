@@ -1,6 +1,6 @@
 # Port of good old ray-tracing demo
 
-Original credits to: http://www.nokola.com/Raytracer/HowToBuild.aspx
+Original code at: https://github.com/microsoft/dotnet-samples/tree/master/System.Numerics/SIMD/RayTracer
 
 With Net7 RC1 or later do:
 ```
