@@ -1,5 +1,5 @@
 ﻿using RayTracer.Materials;
-using System.Numerics;
+using System.Runtime.Intrinsics;
 
 namespace RayTracer.Objects
 {
@@ -10,7 +10,7 @@ namespace RayTracer.Objects
     {
         private float radius;
 
-        public Disc(Vector3 centerPosition, Material material, Vector3 normalDirection, float radius, float cellWidth)
+        public Disc(Vector128<float> centerPosition, Material material, Vector128<float> normalDirection, float radius, float cellWidth)
             : base(centerPosition, material, normalDirection, cellWidth)
         {
             this.radius = radius;
@@ -28,7 +28,7 @@ namespace RayTracer.Objects
             }
         }
 
-        private bool WithinArea(Vector3 location)
+        private bool WithinArea(Vector128<float> location)
         {
             var distanceFromCenter = (this.Position - location).Magnitude();
             return distanceFromCenter <= radius;
