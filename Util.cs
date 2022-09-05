@@ -87,7 +87,8 @@ namespace RayTracer
 
         public static Vector128<float> Projection(Vector128<float> projectedVector, Vector128<float> directionVector)
         {
-            var mag = Vector128.Dot(projectedVector, directionVector.Normalize());
+            //var mag = Vector128.Dot(projectedVector, directionVector.Normalize());
+            var mag = projectedVector.DotR(directionVector.Normalize());
             return directionVector * mag;
         }
     }

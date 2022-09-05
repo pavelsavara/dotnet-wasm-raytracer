@@ -18,6 +18,5 @@ namespace RayTracer
             this.Distance = distance;
         }
         public Ray(Vector128<float> start, Vector128<float> direction) : this(start, direction, float.PositiveInfinity) { }
-
     }
 }

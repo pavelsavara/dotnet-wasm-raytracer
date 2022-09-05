@@ -29,8 +29,10 @@ namespace RayTracer.Objects
             intersection = new Intersection();
 
             Vector128<float> rayToSphere = ray.Origin - this.Position;
-            float B = Vector128.Dot(rayToSphere, ray.Direction);
-            float C = Vector128.Dot(rayToSphere, rayToSphere) - (Radius * Radius);
+            //float B = Vector128.Dot(rayToSphere, ray.Direction);
+            //float C = Vector128.Dot(rayToSphere, rayToSphere) - (Radius * Radius);
+            float B = rayToSphere.DotR(ray.Direction);
+            float C = rayToSphere.DotR(rayToSphere) - (Radius * Radius);
             float D = B * B - C;
 
             if (D > 0)

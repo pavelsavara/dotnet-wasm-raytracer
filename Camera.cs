@@ -66,14 +66,16 @@ namespace RayTracer
 
         private Ray GetReflectionRay(Vector128<float> origin, Vector128<float> normal, Vector128<float> impactDirection)
         {
-            float c1 = Vector128.Dot(-normal, impactDirection);
+            //float c1 = Vector128.Dot(-normal, impactDirection);
+            float c1 = (-normal).DotR(impactDirection);
             Vector128<float> reflectionDirection = impactDirection + (normal * Vector128.Create(2 * c1));
             return new Ray(origin + reflectionDirection * Vector128.Create(.01f), reflectionDirection); // Ensures the ray starts "just off" the reflected surface
         }
 
         private Ray GetRefractionRay(Vector128<float> origin, Vector128<float> normal, Vector128<float> previousDirection, float refractivity)
         {
-            float c1 = Vector128.Dot(normal, previousDirection);
+            //float c1 = Vector128.Dot(normal, previousDirection);
+            float c1 = normal.DotR(previousDirection);
             float c2 = 1 - refractivity * refractivity * (1 - c1 * c1);
             if (c2 < 0)
                 c2 = (float)Math.Sqrt(c2);
@@ -151,7 +153,8 @@ namespace RayTracer
                 var lightDistance = Util.Distance(intersection.Point, light.Position);
 
                 // Accumulate diffuse lighting:
-                var lightEffectiveness = Vector128.Dot(towardsLight, intersection.Normal);
+                //var lightEffectiveness = Vector128.Dot(towardsLight, intersection.Normal);
+                var lightEffectiveness = towardsLight.DotR(intersection.Normal);
                 if (lightEffectiveness > 0.0f)
                 {
                     lightContribution = lightContribution + (intersection.Color * light.GetIntensityAtDistance(lightDistance) * light.Color * lightEffectiveness);

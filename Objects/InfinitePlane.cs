@@ -49,8 +49,10 @@ namespace RayTracer.Objects
             Vector128<float> vecDirection = ray.Direction;
             Vector128<float> rayToPlaneDirection = ray.Origin - this.Position;
 
-            float D = Vector128.Dot(this.normalDirection, vecDirection);
-            float N = -Vector128.Dot(this.normalDirection, rayToPlaneDirection);
+            //float D = Vector128.Dot(this.normalDirection, vecDirection);
+            //float N = -Vector128.Dot(this.normalDirection, rayToPlaneDirection);
+            float D = this.normalDirection.DotR(vecDirection);
+            float N = -this.normalDirection.DotR(rayToPlaneDirection);
 
             if (Math.Abs(D) <= .0005f)
             {
@@ -76,7 +78,8 @@ namespace RayTracer.Objects
         {
             var uvPosition = this.Position + position;
 
-            var uMag = Vector128.Dot(uvPosition, uDirection);
+            //var uMag = Vector128.Dot(uvPosition, uDirection);
+            var uMag = uvPosition.DotR(uDirection);
             var u = (Vector128.Create(uMag) * uDirection).Magnitude();
             if (uMag < 0)
             {
@@ -84,7 +87,8 @@ namespace RayTracer.Objects
             }
             u = (u % cellWidth) / cellWidth;
 
-            var vMag = Vector128.Dot(uvPosition, vDirection);
+            //var vMag = Vector128.Dot(uvPosition, vDirection);
+            var vMag = uvPosition.DotR(vDirection);
             var v = (Vector128.Create(vMag) * vDirection).Magnitude();
             if (vMag < 0)
             {
