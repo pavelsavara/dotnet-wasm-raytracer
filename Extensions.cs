@@ -25,16 +25,19 @@ namespace RayTracer
             return v / Vector128.Create(v.Magnitude());
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static public float X(this Vector128<float> v)
         {
             return v.GetElement(0);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static public float Y(this Vector128<float> v)
         {
             return v.GetElement(1);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static public float Z(this Vector128<float> v)
         {
             return v.GetElement(2);
