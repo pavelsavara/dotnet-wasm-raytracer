@@ -1,5 +1,5 @@
 ﻿using RayTracer.Materials;
-using System.Numerics;
+using System.Runtime.Intrinsics;
 
 namespace RayTracer.Objects
 {
@@ -10,7 +10,7 @@ namespace RayTracer.Objects
     {
         private float width, height;
 
-        public Quad(Vector3 centerPosition, Material material, Vector3 normalDirection, float width, float height, float cellWidth)
+        public Quad(Vector128<float> centerPosition, Material material, Vector128<float> normalDirection, float width, float height, float cellWidth)
             : base(centerPosition, material, normalDirection, cellWidth)
         {
             this.width = width;
@@ -29,7 +29,7 @@ namespace RayTracer.Objects
             }
         }
 
-        private bool WithinArea(Vector3 location)
+        private bool WithinArea(Vector128<float> location)
         {
             var differenceFromCenter = this.Position - location;
             var uLength = Util.Projection(differenceFromCenter, uDirection);

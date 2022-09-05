@@ -1,6 +1,6 @@
 ﻿using RayTracer.Materials;
 using System;
-using System.Numerics;
+using System.Runtime.Intrinsics;
 
 namespace RayTracer.Objects
 {
@@ -9,9 +9,9 @@ namespace RayTracer.Objects
     /// </summary>
     public class InfinitePlane : DrawableSceneObject
     {
-        private Vector3 normalDirection;
-        protected Vector3 uDirection;
-        protected Vector3 vDirection;
+        private Vector128<float> normalDirection;
+        protected Vector128<float> uDirection;
+        protected Vector128<float> vDirection;
         private float cellWidth;
 
         /// <summary>
@@ -21,10 +21,10 @@ namespace RayTracer.Objects
         /// <param name="material">The plane's material</param>
         /// <param name="normalDirection">The normal direction of the plane</param>
         /// <param name="cellWidth">The width of a cell in the plane, used for texture coordinate mapping.</param>
-        public InfinitePlane(Vector3 position, Material material, Vector3 normalDirection, float cellWidth)
+        public InfinitePlane(Vector128<float> position, Material material, Vector128<float> normalDirection, float cellWidth)
             : base(position, material)
         {
-            this.normalDirection = normalDirection.Normalized();
+            this.normalDirection = normalDirection.Normalize();
             if (normalDirection == Util.ForwardVector)
             {
                 this.uDirection = -Util.RightVector;
@@ -35,10 +35,10 @@ namespace RayTracer.Objects
             }
             else
             {
-                this.uDirection = Util.CrossProduct(normalDirection, Util.ForwardVector).Normalized();
+                this.uDirection = Util.CrossProduct(normalDirection, Util.ForwardVector).Normalize();
             }
 
-            this.vDirection = -Util.CrossProduct(normalDirection, uDirection).Normalized();
+            this.vDirection = -Util.CrossProduct(normalDirection, uDirection).Normalize();
             this.cellWidth = cellWidth;
         }
 
@@ -46,11 +46,13 @@ namespace RayTracer.Objects
         {
             intersection = new Intersection();
 
-            Vector3 vecDirection = ray.Direction;
-            Vector3 rayToPlaneDirection = ray.Origin - this.Position;
+            Vector128<float> vecDirection = ray.Direction;
+            Vector128<float> rayToPlaneDirection = ray.Origin - this.Position;
 
-            float D = Vector3.Dot(this.normalDirection, vecDirection);
-            float N = -Vector3.Dot(this.normalDirection, rayToPlaneDirection);
+            //float D = Vector128.Dot(this.normalDirection, vecDirection);
+            //float N = -Vector128.Dot(this.normalDirection, rayToPlaneDirection);
+            float D = this.normalDirection.DotR(vecDirection);
+            float N = -this.normalDirection.DotR(rayToPlaneDirection);
 
             if (Math.Abs(D) <= .0005f)
             {
@@ -63,7 +65,7 @@ namespace RayTracer.Objects
                 return false;
             }
 
-            var intersectionPoint = ray.Origin + (new Vector3(sI) * vecDirection);
+            var intersectionPoint = ray.Origin + (Vector128.Create(sI) * vecDirection);
             var uv = this.GetUVCoordinate(intersectionPoint);
 
             var color = Material.GetDiffuseColorAtCoordinates(uv);
@@ -72,20 +74,22 @@ namespace RayTracer.Objects
             return true;
         }
 
-        public override UVCoordinate GetUVCoordinate(Vector3 position)
+        public override UVCoordinate GetUVCoordinate(Vector128<float> position)
         {
             var uvPosition = this.Position + position;
 
-            var uMag = Vector3.Dot(uvPosition, uDirection);
-            var u = (new Vector3(uMag) * uDirection).Magnitude();
+            //var uMag = Vector128.Dot(uvPosition, uDirection);
+            var uMag = uvPosition.DotR(uDirection);
+            var u = (Vector128.Create(uMag) * uDirection).Magnitude();
             if (uMag < 0)
             {
                 u += cellWidth / 2f;
             }
             u = (u % cellWidth) / cellWidth;
 
-            var vMag = Vector3.Dot(uvPosition, vDirection);
-            var v = (new Vector3(vMag) * vDirection).Magnitude();
+            //var vMag = Vector128.Dot(uvPosition, vDirection);
+            var vMag = uvPosition.DotR(vDirection);
+            var v = (Vector128.Create(vMag) * vDirection).Magnitude();
             if (vMag < 0)
             {
                 v += cellWidth / 2f;

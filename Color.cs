@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+﻿using System.Runtime.Intrinsics;
 
 namespace RayTracer
 {
@@ -7,19 +7,19 @@ namespace RayTracer
     /// </summary>
     public struct Color
     {
+        Vector128<float> vector;
+
         /// <summary> The color's red component, between 0.0 and 1.0 </summary>
-        public float R { get { return backingVector.X; } }
+        public float R { get { return vector.GetElement(0); } }
 
         /// <summary> The color's green component, between 0.0 and 1.0 </summary>
-        public float G { get { return backingVector.Y; } }
+        public float G { get { return vector.GetElement(1); } }
 
         /// <summary> The color's blue component, between 0.0 and 1.0 </summary>
-        public float B { get { return backingVector.Z; } }
+        public float B { get { return vector.GetElement(2); } }
 
         /// <summary> The color's alpha component, between 0.0 and 1.0 </summary>
-        public float A { get { return backingVector.W; } }
-
-        private readonly Vector4 backingVector;
+        public float A { get { return vector.GetElement(3); } }
 
         /// <summary>
         /// Constructs a color from the given component values.
@@ -30,12 +30,12 @@ namespace RayTracer
         /// <param name="a">The color's alpha value</param>
         public Color(float r, float g, float b, float a)
         {
-            this.backingVector = new Vector4(r, g, b, a);
+            this.vector = Vector128.Create(r, g, b, a);
         }
 
-        private Color(Vector4 vec)
+        private Color(Vector128<float> vec)
         {
-            this.backingVector = vec;
+            this.vector = vec;
         }
 
         public static readonly Color Red = new Color(1, 0, 0, 1);
@@ -64,7 +64,7 @@ namespace RayTracer
         /// </summary>
         public static Color Average(Color first, Color second)
         {
-            return new Color((first.backingVector + second.backingVector) * .5f);
+            return new Color((first.vector + second.vector) * .5f);
         }
 
         /// <summary>
@@ -83,15 +83,15 @@ namespace RayTracer
 
         public static Color operator *(Color color, float factor)
         {
-            return new Color(color.backingVector * factor);
+            return new Color(color.vector * factor);
         }
         public static Color operator *(float factor, Color color)
         {
-            return new Color(color.backingVector * factor);
+            return new Color(color.vector * factor);
         }
         public static Color operator *(Color left, Color right)
         {
-            return new Color(left.backingVector * right.backingVector);
+            return new Color(left.vector * right.vector);
         }
 
         public static implicit operator System.Drawing.Color(Color c)

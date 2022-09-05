@@ -1,5 +1,5 @@
 ﻿using RayTracer.Materials;
-using System.Numerics;
+using System.Runtime.Intrinsics;
 
 namespace RayTracer.Objects
 {
@@ -20,11 +20,11 @@ namespace RayTracer.Objects
         /// </summary>
         /// <param name="position"></param>
         /// <returns></returns>
-        public abstract UVCoordinate GetUVCoordinate(Vector3 position);
+        public abstract UVCoordinate GetUVCoordinate(Vector128<float> position);
         
         public Material Material { get; set; }
 
-        public DrawableSceneObject(Vector3 position, Material material)
+        public DrawableSceneObject(Vector128<float> position, Material material)
             : base(position)
         {
             this.Material = material;

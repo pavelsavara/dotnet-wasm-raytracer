@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Numerics;
+using System.Runtime.Intrinsics;
 
 namespace RayTracer
 {
@@ -49,44 +49,46 @@ namespace RayTracer
             return radians;
         }
 
-        public static readonly Vector3 RightVector = new Vector3(1, 0, 0);
-        public static readonly Vector3 UpVector = new Vector3(0, 1, 0);
-        public static readonly Vector3 ForwardVector = new Vector3(0, 0, 1);
+        public static readonly Vector128<float> RightVector = Vector128.Create(1f, 0f, 0f, 0f);
+        public static readonly Vector128<float> UpVector = Vector128.Create(0f, 1f, 0f, 0f);
+        public static readonly Vector128<float> ForwardVector = Vector128.Create(0f, 0f, 1f, 0f);
 
-        public static Vector3 CrossProduct(Vector3 left, Vector3 right)
+        public static Vector128<float> CrossProduct(Vector128<float> left, Vector128<float> right)
         {
-            return new Vector3(
-                left.Y * right.Z - left.Z * right.Y,
-                left.Z * right.X - left.X * right.Z,
-                left.X * right.Y - left.Y * right.X);
+            return Vector128.Create(
+                left.Y() * right.Z() - left.Z() * right.Y(),
+                left.Z() * right.X() - left.X() * right.Z(),
+                left.X() * right.Y() - left.Y() * right.X(),
+                0);
         }
 
-        public static float Magnitude(this Vector3 v)
-        {
-            return (float)Math.Abs(Math.Sqrt(Vector3.Dot(v,v)));
-        }
+        //public static float Magnitude(this Vector128<float> v)
+        //{
+        //    return (float)Math.Abs(Math.Sqrt(Vector128.Dot(v,v)));
+        //}
 
-        public static Vector3 Normalized(this Vector3 v)
-        {
-            var mag = v.Magnitude();
-            if (mag != 1)
-            {
-                return v / new Vector3(mag);
-            }
-            else
-            {
-                return v;
-            }
-        }
+        //public static Vector128<float> Normalized(this Vector128<float> v)
+        //{
+        //    var mag = v.Magnitude();
+        //    if (mag != 1)
+        //    {
+        //        return v / new Vector128<float>(mag);
+        //    }
+        //    else
+        //    {
+        //        return v;
+        //    }
+        //}
 
-        public static float Distance(Vector3 first, Vector3 second)
+        public static float Distance(Vector128<float> first, Vector128<float> second)
         {
             return (first - second).Magnitude();
         }
 
-        public static Vector3 Projection(Vector3 projectedVector, Vector3 directionVector)
+        public static Vector128<float> Projection(Vector128<float> projectedVector, Vector128<float> directionVector)
         {
-            var mag = Vector3.Dot(projectedVector, directionVector.Normalized());
+            //var mag = Vector128.Dot(projectedVector, directionVector.Normalize());
+            var mag = projectedVector.DotR(directionVector.Normalize());
             return directionVector * mag;
         }
     }
