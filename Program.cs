@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices.JavaScript;
 using System;
 using RayTracer;
+using System.Threading.Tasks;
 
 public partial class MainJS
 {
@@ -14,14 +15,14 @@ public partial class MainJS
     internal static partial void RenderCanvas([JSMarshalAs<JSType.MemoryView>] ArraySegment<byte> rgba);
 
     [JSExport]
-    internal static void OnClick(){
+    internal static async Task OnClick(){
         var now = DateTime.UtcNow;
         Console.WriteLine ("Rendering started");
 
         Scene scene = Scene.TwoPlanes;
         scene.Camera.ReflectionDepth = 5;
         scene.Camera.FieldOfView = 120;
-        var canvasRGBA = scene.Camera.RenderScene(scene, 640, 480);
+        var canvasRGBA = await scene.Camera.RenderScene(scene, 640, 480);
 
         Console.WriteLine ("Rendering finished in "+ (DateTime.UtcNow - now).TotalMilliseconds+ " ms");
         RenderCanvas(canvasRGBA);

@@ -87,7 +87,7 @@ namespace RayTracer
         /// </summary>
         /// <param name="scene">The scene to render</param>
         /// <returns>A bitmap of the rendered scene.</returns>
-        public byte[] RenderScene(Scene scene, int width = -1, int height = -1)
+        public async Task<byte[]> RenderScene(Scene scene, int width = -1, int height = -1)
         {
             if (width == -1 || height == -1)
             {
@@ -107,14 +107,14 @@ namespace RayTracer
 	    renderer[2] = factory.StartNew (() => RenderRange (scene, width, height, 0, width/2, height/2, height), TaskCreationOptions.LongRunning);
 	    renderer[3] = factory.StartNew (() => RenderRange (scene, width, height, width/2, width, height/2, height), TaskCreationOptions.LongRunning);
 
-	    Task.WaitAll((Task[])renderer);
+	    byte[][] rendResult = await Task.WhenAll(renderer);
 
             var rgbaBytes = new byte[height * width * 4];
 
-	    CopyRange (rgbaBytes, width, height, renderer[0].Result, 0, width/2, 0, height/2);
-	    CopyRange (rgbaBytes, width, height, renderer[1].Result, width/2, width, 0, height/2);
-	    CopyRange (rgbaBytes, width, height, renderer[2].Result, 0, width/2, height/2, height);
-	    CopyRange (rgbaBytes, width, height, renderer[3].Result, width/2, width, height/2, height);
+	    CopyRange (rgbaBytes, width, height, rendResult[0], 0, width/2, 0, height/2);
+	    CopyRange (rgbaBytes, width, height, rendResult[1], width/2, width, 0, height/2);
+	    CopyRange (rgbaBytes, width, height, rendResult[2], 0, width/2, height/2, height);
+	    CopyRange (rgbaBytes, width, height, rendResult[3], width/2, width, height/2, height);
 
             return rgbaBytes;
         }
@@ -145,7 +145,7 @@ namespace RayTracer
 	    for (int y = yStart; y < yEnd; y++) {
 		for (int x = xStart; x < xEnd; x++) {
 		    int offset = 4 * (width * (height - y - 1) + x);
-		    for (int c = 0; c < 3; c++)
+		    for (int c = 0; c < 4; c++)
 			dest[offset + c] = src[offset + c];
 		}
 	    }
