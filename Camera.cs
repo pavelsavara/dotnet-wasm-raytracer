@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Numerics;
 using System.Threading.Tasks;
+using System.Threading;
 
 namespace RayTracer
 {
@@ -100,19 +101,20 @@ namespace RayTracer
 
             var rgbaBytes = new byte[height * width * 4];
 
-	    Task[] renderer = new Task[4];
-	    renderer[0] = Task.Run (() => {
+	    var renderer = new Task[4];
+	    var factory = new TaskFactory();
+	    renderer[0] = factory.StartNew (() => {
 		    RenderRange (scene, width, height, rgbaBytes, 0, width/2, 0, height/2);
-	    });
-	    renderer[1] = Task.Run (() => {
+	    }, TaskCreationOptions.LongRunning);
+	    renderer[1] = factory.StartNew (() => {
 		    RenderRange (scene, width, height, rgbaBytes, width/2, width, 0, height/2);
-	    });
-	    renderer[2] = Task.Run (() => {
+	    }, TaskCreationOptions.LongRunning);
+	    renderer[2] = factory.StartNew (() => {
 		    RenderRange (scene, width, height, rgbaBytes, 0, width/2, height/2, height);
-	    });
-	    renderer[3] = Task.Run (() => {
+	    }, TaskCreationOptions.LongRunning);
+	    renderer[3] = factory.StartNew (() => {
 		    RenderRange (scene, width, height, rgbaBytes, width/2, width, height/2, height);
-	    });
+	    }, TaskCreationOptions.LongRunning);
 
 	    Task.WaitAll(renderer);
 

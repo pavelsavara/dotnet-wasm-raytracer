@@ -8,7 +8,7 @@
     <LangVersion>preview</LangVersion>
     <EnableAggressiveTrimming>true</EnableAggressiveTrimming>
     <PublishTrimmed>true</PublishTrimmed>
-    <RunAOTCompilation Condition="false">true</RunAOTCompilation>
+    <RunAOTCompilation>true</RunAOTCompilation>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,6 +18,6 @@
 
   <PropertyGroup>
     <WasmEnableThreads>true</WasmEnableThreads>
-    <WasmGenerateAppBundle>true</WasmGenerateAppBundle>
+    <WasmBuildNative Condition="false">true</WasmBuildNative> 
   </PropertyGroup>
 </Project>
