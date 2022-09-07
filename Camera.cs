@@ -107,10 +107,10 @@ namespace RayTracer
 	    renderer[1] = Task.Run (() => {
 		    RenderRange (scene, width, height, rgbaBytes, width/2, width, 0, height/2);
 	    });
-	    renderer[0] = Task.Run (() => {
+	    renderer[2] = Task.Run (() => {
 		    RenderRange (scene, width, height, rgbaBytes, 0, width/2, height/2, height);
 	    });
-	    renderer[1] = Task.Run (() => {
+	    renderer[3] = Task.Run (() => {
 		    RenderRange (scene, width, height, rgbaBytes, width/2, width, height/2, height);
 	    });
 
