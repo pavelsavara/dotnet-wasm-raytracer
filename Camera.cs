@@ -99,34 +99,33 @@ namespace RayTracer
                 renderSize = new Size(width, height);
             }
 
+
+	    var renderer = new Task<byte[]>[4];
+	    var factory = new TaskFactory();
+	    renderer[0] = factory.StartNew (() => RenderRange (scene, width, height, 0, width/2, 0, height/2), TaskCreationOptions.LongRunning);
+	    renderer[1] = factory.StartNew (() => RenderRange (scene, width, height, width/2, width, 0, height/2), TaskCreationOptions.LongRunning);
+	    renderer[2] = factory.StartNew (() => RenderRange (scene, width, height, 0, width/2, height/2, height), TaskCreationOptions.LongRunning);
+	    renderer[3] = factory.StartNew (() => RenderRange (scene, width, height, width/2, width, height/2, height), TaskCreationOptions.LongRunning);
+
+	    Task.WaitAll((Task[])renderer);
+
             var rgbaBytes = new byte[height * width * 4];
 
-	    var renderer = new Task[4];
-	    var factory = new TaskFactory();
-	    renderer[0] = factory.StartNew (() => {
-		    RenderRange (scene, width, height, rgbaBytes, 0, width/2, 0, height/2);
-	    }, TaskCreationOptions.LongRunning);
-	    renderer[1] = factory.StartNew (() => {
-		    RenderRange (scene, width, height, rgbaBytes, width/2, width, 0, height/2);
-	    }, TaskCreationOptions.LongRunning);
-	    renderer[2] = factory.StartNew (() => {
-		    RenderRange (scene, width, height, rgbaBytes, 0, width/2, height/2, height);
-	    }, TaskCreationOptions.LongRunning);
-	    renderer[3] = factory.StartNew (() => {
-		    RenderRange (scene, width, height, rgbaBytes, width/2, width, height/2, height);
-	    }, TaskCreationOptions.LongRunning);
-
-	    Task.WaitAll(renderer);
+	    CopyRange (rgbaBytes, width, height, renderer[0].Result, 0, width/2, 0, height/2);
+	    CopyRange (rgbaBytes, width, height, renderer[1].Result, width/2, width, 0, height/2);
+	    CopyRange (rgbaBytes, width, height, renderer[2].Result, 0, width/2, height/2, height);
+	    CopyRange (rgbaBytes, width, height, renderer[3].Result, width/2, width, height/2, height);
 
             return rgbaBytes;
         }
 
-	private void RenderRange (Scene scene, int width, int height, byte[] rgbaBytes, int xStart, int xEnd, int yStart, int yEnd)
+	private byte[] RenderRange (Scene scene, int width, int height, int xStart, int xEnd, int yStart, int yEnd)
 	{
-            for (int x = xStart; x < xEnd; x++)
-            {
-                for (int y = yStart; y < yEnd; y++)
-                {
+	    byte[] rgbaBytes = new byte[height * width * 4];
+	    for (int y = yStart; y < yEnd; y++)
+	    {
+		for (int x = xStart; x < xEnd; x++)
+		{
                     var viewPortX = ((2 * x) / (float)width) - 1;
                     var viewPortY = ((2 * y) / (float)height) - 1;
                     var color = TraceRayAgainstScene(GetRay(viewPortX, viewPortY), scene);
@@ -138,6 +137,18 @@ namespace RayTracer
                     rgbaBytes[red + 3] = 255;
                 }
             }
+	    return rgbaBytes;
+	}
+
+	private void CopyRange (byte[] dest, int width, int height, byte[] src, int xStart, int xEnd, int yStart, int yEnd)
+	{
+	    for (int y = yStart; y < yEnd; y++) {
+		for (int x = xStart; x < xEnd; x++) {
+		    int offset = 4 * (width * (height - y - 1) + x);
+		    for (int c = 0; c < 3; c++)
+			dest[offset + c] = src[offset + c];
+		}
+	    }
 	}
 
         private Color TraceRayAgainstScene(Ray ray, Scene scene)
