@@ -8,11 +8,16 @@
     <LangVersion>preview</LangVersion>
     <EnableAggressiveTrimming>true</EnableAggressiveTrimming>
     <PublishTrimmed>true</PublishTrimmed>
-    <RunAOTCompilation>true</RunAOTCompilation>
+    <RunAOTCompilation Condition="false">true</RunAOTCompilation>
   </PropertyGroup>
 
   <ItemGroup>
     <WasmExtraFilesToDeploy Include="index.html" />
     <WasmExtraFilesToDeploy Include="main.js" />
   </ItemGroup>
+
+  <PropertyGroup>
+    <WasmEnableThreads>true</WasmEnableThreads>
+    <WasmGenerateAppBundle>true</WasmGenerateAppBundle>
+  </PropertyGroup>
 </Project>

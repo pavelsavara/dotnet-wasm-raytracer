@@ -100,9 +100,30 @@ namespace RayTracer
 
             var rgbaBytes = new byte[height * width * 4];
 
-            for (int x = 0; x < width; x++)
+	    Task[] renderer = new Task[4];
+	    renderer[0] = Task.Run (() => {
+		    RenderRange (scene, width, height, rgbaBytes, 0, width/2, 0, height/2);
+	    });
+	    renderer[1] = Task.Run (() => {
+		    RenderRange (scene, width, height, rgbaBytes, width/2, width, 0, height/2);
+	    });
+	    renderer[0] = Task.Run (() => {
+		    RenderRange (scene, width, height, rgbaBytes, 0, width/2, height/2, height);
+	    });
+	    renderer[1] = Task.Run (() => {
+		    RenderRange (scene, width, height, rgbaBytes, width/2, width, height/2, height);
+	    });
+
+	    Task.WaitAll(renderer);
+
+            return rgbaBytes;
+        }
+
+	private void RenderRange (Scene scene, int width, int height, byte[] rgbaBytes, int xStart, int xEnd, int yStart, int yEnd)
+	{
+            for (int x = xStart; x < xEnd; x++)
             {
-                for (int y = 0; y < height; y++)
+                for (int y = yStart; y < yEnd; y++)
                 {
                     var viewPortX = ((2 * x) / (float)width) - 1;
                     var viewPortY = ((2 * y) / (float)height) - 1;
@@ -115,10 +136,7 @@ namespace RayTracer
                     rgbaBytes[red + 3] = 255;
                 }
             }
-
-            return rgbaBytes;
-        }
-
+	}
 
         private Color TraceRayAgainstScene(Ray ray, Scene scene)
         {
