@@ -15,6 +15,7 @@ public partial class MainJS
     internal static partial void RenderCanvas([JSMarshalAs<JSType.MemoryView>] ArraySegment<byte> rgba);
 
     [JSExport]
+    [return: JSMarshalAs<JSType.Promise<JSType.Void>>]
     internal static async Task OnClick(){
         var now = DateTime.UtcNow;
         Console.WriteLine ("Rendering started");

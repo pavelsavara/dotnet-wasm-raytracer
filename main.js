@@ -17,7 +17,9 @@ const { setModuleImports, getAssemblyExports, getConfig } = await dotnet.create(
 setModuleImports("main.js", { renderCanvas });
 const config = getConfig();
 const exports = await getAssemblyExports(config.mainAssemblyName);
-globalThis.onClick = exports.MainJS.OnClick;
+globalThis.onClick = async function () {
+    await exports.MainJS.OnClick();
+}
 
 await dotnet.run();
 const btnRender = document.getElementById("btnRender");
