@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+﻿using System.Runtime.Intrinsics;
 
 namespace RayTracer
 {
@@ -10,8 +10,8 @@ namespace RayTracer
         /// <summary>
         /// The world-space position of the scene object
         /// </summary>
-        public Vector3 Position { get; set; }
-        public SceneObjectBase(Vector3 position)
+        public Vector128<float> Position { get; set; }
+        public SceneObjectBase(Vector128<float> position)
         {
             this.Position = position;
         }

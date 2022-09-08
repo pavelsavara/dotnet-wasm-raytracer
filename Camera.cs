@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Numerics;
+using System.Runtime.Intrinsics;
 using System.Threading.Tasks;
 using System.Threading;
 
@@ -13,8 +13,8 @@ namespace RayTracer
     /// </summary>
     public class Camera : SceneObjectBase
     {
-        private Vector3 forward, up, right;
-        private Vector3 screenPosition;
+        private Vector128<float> forward, up, right;
+        private Vector128<float> screenPosition;
         private float fieldOfView;
         public float FieldOfView
         {
@@ -36,15 +36,15 @@ namespace RayTracer
             this.yRatio = (float)renderSize.Height / (float)renderSize.Width;
         }
 
-        public Camera() : this(Vector3.Zero, Util.ForwardVector, Util.UpVector, 70f, new Size(640, 480)) { }
+        public Camera() : this(Vector128<float>.Zero, Util.ForwardVector, Util.UpVector, 70f, new Size(640, 480)) { }
 
-        public Camera(Vector3 position, Vector3 forward, Vector3 worldUp, float fieldOfView, Size renderSize)
+        public Camera(Vector128<float> position, Vector128<float> forward, Vector128<float> worldUp, float fieldOfView, Size renderSize)
             : base(position)
         {
             this.ReflectionDepth = 5;
-            this.forward = forward.Normalized();
-            this.right = Util.CrossProduct(worldUp, forward).Normalized();
-            this.up = -Util.CrossProduct(right, forward).Normalized();
+            this.forward = forward.Normalize();
+            this.right = Util.CrossProduct(worldUp, forward).Normalize();
+            this.up = -Util.CrossProduct(right, forward).Normalize();
             this.fieldOfView = fieldOfView;
             this.RenderSize = renderSize;
 
@@ -55,31 +55,33 @@ namespace RayTracer
         {
             var screenDistance = 1f / (float)Math.Tan(Util.DegreesToRadians(fieldOfView) / 2f);
 
-            this.screenPosition = this.Position + forward * new Vector3(screenDistance);
+            this.screenPosition = this.Position + forward * Vector128.Create(screenDistance);
         }
 
         private Ray GetRay(float viewPortX, float viewPortY)
         {
-            var rayWorldPosition = screenPosition + ((new Vector3(viewPortX) * right) + (new Vector3(viewPortY) * up * new Vector3(yRatio)));
+            var rayWorldPosition = screenPosition + ((Vector128.Create(viewPortX) * right) + (Vector128.Create(viewPortY) * up * Vector128.Create(yRatio)));
             var direction = rayWorldPosition - this.Position;
             return new Ray(rayWorldPosition, direction);
         }
 
-        private Ray GetReflectionRay(Vector3 origin, Vector3 normal, Vector3 impactDirection)
+        private Ray GetReflectionRay(Vector128<float> origin, Vector128<float> normal, Vector128<float> impactDirection)
         {
-            float c1 = Vector3.Dot(-normal, impactDirection);
-            Vector3 reflectionDirection = impactDirection + (normal * new Vector3(2 * c1));
-            return new Ray(origin + reflectionDirection * new Vector3(.01f), reflectionDirection); // Ensures the ray starts "just off" the reflected surface
+            //float c1 = Vector128.Dot(-normal, impactDirection);
+            float c1 = (-normal).DotR(impactDirection);
+            Vector128<float> reflectionDirection = impactDirection + (normal * Vector128.Create(2 * c1));
+            return new Ray(origin + reflectionDirection * Vector128.Create(.01f), reflectionDirection); // Ensures the ray starts "just off" the reflected surface
         }
 
-        private Ray GetRefractionRay(Vector3 origin, Vector3 normal, Vector3 previousDirection, float refractivity)
+        private Ray GetRefractionRay(Vector128<float> origin, Vector128<float> normal, Vector128<float> previousDirection, float refractivity)
         {
-            float c1 = Vector3.Dot(normal, previousDirection);
+            //float c1 = Vector128.Dot(normal, previousDirection);
+            float c1 = normal.DotR(previousDirection);
             float c2 = 1 - refractivity * refractivity * (1 - c1 * c1);
             if (c2 < 0)
                 c2 = (float)Math.Sqrt(c2);
-            Vector3 refractionDirection = (normal * new Vector3((refractivity * c1 - c2)) - previousDirection * new Vector3(refractivity)) * new Vector3(-1);
-            return new Ray(origin, refractionDirection.Normalized()); // no refraction
+            Vector128<float> refractionDirection = (normal * Vector128.Create((refractivity * c1 - c2)) - previousDirection * Vector128.Create(refractivity)) * Vector128.Create(-1f);
+            return new Ray(origin, refractionDirection.Normalize()); // no refraction
         }
 
         /// <summary>
@@ -178,11 +180,12 @@ namespace RayTracer
             foreach (Light light in scene.Lights)
             {
                 var lightContribution = new Color();
-                var towardsLight = (light.Position - intersection.Point).Normalized();
+                var towardsLight = (light.Position - intersection.Point).Normalize();
                 var lightDistance = Util.Distance(intersection.Point, light.Position);
 
                 // Accumulate diffuse lighting:
-                var lightEffectiveness = Vector3.Dot(towardsLight, intersection.Normal);
+                //var lightEffectiveness = Vector128.Dot(towardsLight, intersection.Normal);
+                var lightEffectiveness = towardsLight.DotR(intersection.Normal);
                 if (lightEffectiveness > 0.0f)
                 {
                     lightContribution = lightContribution + (intersection.Color * light.GetIntensityAtDistance(lightDistance) * light.Color * lightEffectiveness);
