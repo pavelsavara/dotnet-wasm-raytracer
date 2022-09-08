@@ -100,27 +100,71 @@ namespace RayTracer
             }
 
 
-	    var renderer = new Task<byte[]>[4];
+	    var fragments = Divide (width, height, 4, 4);
+	    DumpFragments (fragments);
+	    var fragCount = fragments.Length;
+	    var renderer = new Task<byte[]>[fragCount];
 	    var factory = new TaskFactory();
-	    renderer[0] = factory.StartNew (() => RenderRange (scene, width, height, 0, width/2, 0, height/2), TaskCreationOptions.LongRunning);
-	    renderer[1] = factory.StartNew (() => RenderRange (scene, width, height, width/2, width, 0, height/2), TaskCreationOptions.LongRunning);
-	    renderer[2] = factory.StartNew (() => RenderRange (scene, width, height, 0, width/2, height/2, height), TaskCreationOptions.LongRunning);
-	    renderer[3] = factory.StartNew (() => RenderRange (scene, width, height, width/2, width, height/2, height), TaskCreationOptions.LongRunning);
+	    for (int i = 0; i < fragCount; i++) {
+		Fragment f = fragments[i];
+	    	renderer[i] = factory.StartNew (() => RenderRange (scene, width, height, f)/*, TaskCreationOptions.LongRunning*/);
+	    }
 
-	    byte[][] rendResult = await Task.WhenAll(renderer);
+	    byte[][] rendResult = await Task.WhenAll(renderer).ConfigureAwait(false);
 
             var rgbaBytes = new byte[height * width * 4];
 
-	    CopyRange (rgbaBytes, width, height, rendResult[0], 0, width/2, 0, height/2);
-	    CopyRange (rgbaBytes, width, height, rendResult[1], width/2, width, 0, height/2);
-	    CopyRange (rgbaBytes, width, height, rendResult[2], 0, width/2, height/2, height);
-	    CopyRange (rgbaBytes, width, height, rendResult[3], width/2, width, height/2, height);
+	    for (int i = 0; i < fragCount; i++) {
+		CopyRange (rgbaBytes, width, height, rendResult[i], fragments[i]);
+	    }
 
             return rgbaBytes;
         }
 
-	private byte[] RenderRange (Scene scene, int width, int height, int xStart, int xEnd, int yStart, int yEnd)
+	internal struct Fragment {
+	    public int XStart;
+	    public int XEnd;
+	    public int YStart;
+	    public int YEnd;
+	}
+
+	private void DumpFragment (string prefix, Fragment f) {
+		Console.WriteLine ($"{prefix} ({f.XStart}, {f.YStart})-({f.XEnd}, {f.YEnd})");
+	}
+	private void DumpFragments (Fragment[] fragments)
 	{
+	    Console.WriteLine ($"Threre are {fragments.Length} fragments");
+	    for (int i = 0; i < fragments.Length; i++) {
+		Fragment f = fragments[i];
+		DumpFragment($"Fragment {i} ", f);
+	    }
+	}
+
+	private Fragment[] Divide (int width, int height, int hCount, int vCount)
+	{
+	    Fragment[] fragments = new Fragment[hCount * vCount];
+	    int fragWidth = width / hCount;
+	    int fragHeight = height / vCount;
+	    int frag = 0;
+	    for (int curY = 0; curY < height; curY += fragHeight) {
+		int endY = curY + fragHeight;
+		endY = endY < height ? endY : height;
+		for (int curX = 0; curX < width; curX += fragWidth) {
+		    int endX = curX + fragWidth;
+		    endX = endX < width ? endX : width;
+		    fragments[frag++] = new Fragment { XStart = curX, XEnd = endX, YStart = curY, YEnd = endY };
+		}
+	    }
+	    return fragments;
+	}
+
+	private byte[] RenderRange (Scene scene, int width, int height, Fragment fragment)
+	{
+	    DumpFragment ($"Worker {Thread.CurrentThread.ManagedThreadId} has fragment ", fragment);
+	    int xStart = fragment.XStart;
+	    int xEnd = fragment.XEnd;
+	    int yStart = fragment.YStart;
+	    int yEnd = fragment.YEnd;
 	    byte[] rgbaBytes = new byte[height * width * 4];
 	    for (int y = yStart; y < yEnd; y++)
 	    {
@@ -131,6 +175,9 @@ namespace RayTracer
                     var color = TraceRayAgainstScene(GetRay(viewPortX, viewPortY), scene);
 
                     var red = 4 * (width * (height - y - 1) + x);
+		    if (red + 3 >= rgbaBytes.Length) {
+			Console.WriteLine ($"out of bounds in worker {Thread.CurrentThread.ManagedThreadId} at ({x},{y})");
+		    }
                     rgbaBytes[red] = (byte)(color.R * 256);
                     rgbaBytes[red + 1] = (byte)(color.G * 256);
                     rgbaBytes[red + 2] = (byte)(color.B * 256);
@@ -140,8 +187,12 @@ namespace RayTracer
 	    return rgbaBytes;
 	}
 
-	private void CopyRange (byte[] dest, int width, int height, byte[] src, int xStart, int xEnd, int yStart, int yEnd)
+	private void CopyRange (byte[] dest, int width, int height, byte[] src, Fragment fragment)
 	{
+	    int xStart = fragment.XStart;
+	    int xEnd = fragment.XEnd;
+	    int yStart = fragment.YStart;
+	    int yEnd = fragment.YEnd;
 	    for (int y = yStart; y < yEnd; y++) {
 		for (int x = xStart; x < xEnd; x++) {
 		    int offset = 4 * (width * (height - y - 1) + x);
