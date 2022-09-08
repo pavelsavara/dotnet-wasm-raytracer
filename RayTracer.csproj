@@ -9,6 +9,7 @@
     <EnableAggressiveTrimming>true</EnableAggressiveTrimming>
     <PublishTrimmed>true</PublishTrimmed>
     <RunAOTCompilation>true</RunAOTCompilation>
+    <WasmSIMD>true</WasmSIMD>
   </PropertyGroup>
 
   <ItemGroup>
