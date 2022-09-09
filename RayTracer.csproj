@@ -9,7 +9,7 @@
     <EnableAggressiveTrimming>true</EnableAggressiveTrimming>
     <PublishTrimmed>true</PublishTrimmed>
     <RunAOTCompilation>true</RunAOTCompilation>
-    <WasmSIMD>true</WasmSIMD>
+    <WasmEnableSIMD>true</WasmEnableSIMD>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,6 +19,5 @@
 
   <PropertyGroup>
     <WasmEnableThreads>true</WasmEnableThreads>
-    <WasmBuildNative Condition="false">true</WasmBuildNative> 
   </PropertyGroup>
 </Project>
