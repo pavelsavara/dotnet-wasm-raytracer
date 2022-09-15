@@ -1,5 +1,7 @@
 # Port of good old ray-tracing demo
 
+This demo requires browser with SIMD support
+
 Original code at: https://github.com/microsoft/dotnet-samples/tree/master/System.Numerics/SIMD/RayTracer
 
 With Net7 RC1 or later do:

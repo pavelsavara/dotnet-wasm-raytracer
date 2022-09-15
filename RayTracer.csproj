@@ -6,12 +6,10 @@
 		<OutputType>Exe</OutputType>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<LangVersion>preview</LangVersion>
-		<EnableAggressiveTrimming>true</EnableAggressiveTrimming>
 		<PublishTrimmed>true</PublishTrimmed>
+		<TrimMode>full</TrimMode>
 		<RunAOTCompilation>true</RunAOTCompilation>
-		<WasmSIMD>true</WasmSIMD>
-		<WasmNativeDebugSymbols>true</WasmNativeDebugSymbols>
-		<WasmNativeStrip>false</WasmNativeStrip>
+		<WasmEnableSIMD>true</WasmEnableSIMD>
 	</PropertyGroup>
 	<ItemGroup>
 		<WasmExtraFilesToDeploy Include="index.html" />
