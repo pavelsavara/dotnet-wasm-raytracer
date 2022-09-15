@@ -9,10 +9,6 @@
     },
     {
       "behavior": "assembly",
-      "name": "System.Collections.dll"
-    },
-    {
-      "behavior": "assembly",
       "name": "System.ComponentModel.Primitives.dll"
     },
     {
@@ -25,23 +21,11 @@
     },
     {
       "behavior": "assembly",
-      "name": "System.Diagnostics.Tracing.dll"
-    },
-    {
-      "behavior": "assembly",
       "name": "System.Drawing.dll"
     },
     {
       "behavior": "assembly",
       "name": "System.Drawing.Primitives.dll"
-    },
-    {
-      "behavior": "assembly",
-      "name": "System.Memory.dll"
-    },
-    {
-      "behavior": "assembly",
-      "name": "System.Numerics.Vectors.dll"
     },
     {
       "behavior": "assembly",
@@ -57,31 +41,7 @@
     },
     {
       "behavior": "assembly",
-      "name": "System.Runtime.dll"
-    },
-    {
-      "behavior": "assembly",
-      "name": "System.Runtime.InteropServices.dll"
-    },
-    {
-      "behavior": "assembly",
       "name": "System.Runtime.InteropServices.JavaScript.dll"
-    },
-    {
-      "behavior": "assembly",
-      "name": "System.Threading.dll"
-    },
-    {
-      "behavior": "assembly",
-      "name": "System.Threading.Thread.dll"
-    },
-    {
-      "behavior": "assembly",
-      "name": "System.Threading.ThreadPool.dll"
-    },
-    {
-      "behavior": "assembly",
-      "name": "System.Transactions.Local.dll"
     },
     {
       "virtualPath": "runtimeconfig.bin",
