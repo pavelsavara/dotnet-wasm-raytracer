@@ -10,7 +10,7 @@ function drawWaitingForRendering(canvas) {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.restore();
     ctx.save();
-    ctx.font = "bold 50px Arial sans-serif";
+    ctx.font = "bold 50px Arial, sans-serif";
     ctx.fillStyle = "darkred";
     ctx.textAlign = "center";
     ctx.fillText("Rendering...", canvas.width / 2, canvas.height / 2);
