@@ -51,13 +51,17 @@ public partial class MainJS
         var now = DateTime.UtcNow;
         string text;
         text = "Rendering started";
-        //Console.WriteLine(text);
+#if !USE_THREADS
+        Console.WriteLine(text);
+#endif
         SetOutText(text);
 
         await sceneEnvironment.Scene.Camera.RenderScene(sceneEnvironment.Scene, sceneEnvironment.rgbaRenderBuffer, sceneEnvironment.Width, sceneEnvironment.Height);
 
         text = $"Rendering finished in {(DateTime.UtcNow - now).TotalMilliseconds} ms";
-        //Console.WriteLine(text);
+#if !USE_THREADS
+        Console.WriteLine(text);
+#endif
         SetOutText(text);
         RenderCanvas();
     }

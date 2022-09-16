@@ -16,6 +16,15 @@
 		<WasmExtraFilesToDeploy Include="main.js" />
 	</ItemGroup>
 	<PropertyGroup>
-		<WasmEnableThreads>true</WasmEnableThreads>
+		<DefineConstants Condition="'$(WasmEnableThreads)' == 'true'">$(DefineConstants);USE_THREADS</DefineConstants>
 	</PropertyGroup>
+
+	<Target Name="Note" BeforeTargets="Build">
+		<PropertyGroup>
+			<PrivWasmEnableThreadsMsg Condition="'$(WasmEnableThreads)' == 'true'">WasmEnableThreads enabled</PrivWasmEnableThreadsMsg>
+			<PrivWasmEnableThreadsMsg Condition="'$(WasmEnableThreads)' != 'true'">WasmEnableThreads disabled</PrivWasmEnableThreadsMsg>
+			<PrivWasmEnableThreadsMsg Condition="'$(WasmEnableThreads)' == ''">WasmEnableThreads unset, threading disabled. To enable threads, pass -p:WasmEnableThreads=true</PrivWasmEnableThreadsMsg>
+		</PropertyGroup>
+		<Message Importance="high" Text="Compiling with $(PrivWasmEnableThreadsMsg)" />
+	</Target>
 </Project>

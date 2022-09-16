@@ -29,6 +29,10 @@ function setOutText(text) {
     outText.innerText = text;
 }
 
+async function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 const { setModuleImports, getAssemblyExports, getConfig } = await dotnet.create();
 setModuleImports("main.js", { renderCanvas, setOutText });
 const config = getConfig();
@@ -40,6 +44,7 @@ const btnRender = document.getElementById("btnRender");
 globalThis.onClick = async function () {
     btnRender.disabled = true;
     drawWaitingForRendering(canvas);
+    await delay(10);
     await exports.MainJS.OnClick();
     btnRender.disabled = false;
 }

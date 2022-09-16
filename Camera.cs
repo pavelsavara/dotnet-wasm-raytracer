@@ -85,8 +85,7 @@ namespace RayTracer
         }
 
         /// <summary>
-        /// Renders the given scene in a background thread. Uses a single thread for rendering.
-        /// </summary>
+        /// Renders the given scene in a background thread.
         /// <param name="scene">The scene to render</param>
         /// <returns>A bitmap of the rendered scene.</returns>
         public async Task RenderScene(Scene scene, Memory<byte> rgbaBytes, int width = -1, int height = -1)
@@ -101,21 +100,27 @@ namespace RayTracer
                 renderSize = new Size(width, height);
             }
 
+#if USE_THREADS
             var stripes = Divide (height, 4);
             var fragCount = stripes.Length;
-                var renderer = new Task[fragCount];
-                var factory = new TaskFactory();
-                for (int i = 0; i < fragCount; i++) {
-                    Stripe f = stripes[i];
-                    renderer[i] = factory.StartNew (() => RenderRange (scene, rgbaBytes.Span, width, height, f),
-                                                    TaskCreationOptions.LongRunning);
-                }
-
-                await Task.WhenAll(renderer).ConfigureAwait(false);
+            var renderer = new Task[fragCount];
+            var factory = new TaskFactory();
+            for (int i = 0; i < fragCount; i++)
+            {
+                Stripe f = stripes[i];
+                renderer[i] = factory.StartNew (() => RenderRange (scene, rgbaBytes.Span, width, height, f),
+                                                TaskCreationOptions.LongRunning);
+            }
+            await Task.WhenAll(renderer).ConfigureAwait(false);
+#else
+            await Task.CompletedTask;
+            RenderRange(scene, rgbaBytes.Span, width, height, new Stripe {YStart = 0, YEnd = height});
+#endif
         }
 
         // A region of the final image constrained to a rectangle from (0, YStart) to (Width, YEnd)
-        internal struct Stripe {
+        internal struct Stripe
+        {
             public int YStart;
             public int YEnd;
 
@@ -125,6 +130,7 @@ namespace RayTracer
             }
         }
 
+#if USE_THREADS
         private static Stripe[] Divide (int height, int vCount)
         {
             Stripe[] fragments = new Stripe[vCount];
@@ -137,6 +143,7 @@ namespace RayTracer
             }
             return fragments;
         }
+#endif
 
         private void RenderRange (Scene scene, Span<byte> rgbaBytes, int width, int height, Stripe fragment)
         {
