@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices.JavaScript;
 using System;
 using RayTracer;
+using System.Threading;
 using System.Threading.Tasks;
 
 public partial class MainJS
@@ -17,6 +18,8 @@ public partial class MainJS
     [JSExport]
     [return: JSMarshalAs<JSType.Promise<JSType.Void>>]
     internal static async Task OnClick(){
+	var c = SynchronizationContext.Current?.GetType().ToString() ?? "<none>";
+	Console.WriteLine ($" Synchronization context on main thread is {c}");
         var now = DateTime.UtcNow;
         Console.WriteLine ("Rendering started");
 

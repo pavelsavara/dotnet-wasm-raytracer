@@ -101,40 +101,71 @@ namespace RayTracer
                 renderSize = new Size(width, height);
             }
 
+            var fragments = Divide (width, height, 4, 4);
+                DumpFragments (fragments);
+            var fragCount = fragments.Length;
+                var renderer = new Task<byte[]>[fragCount];
+                var factory = new TaskFactory();
+                for (int i = 0; i < fragCount; i++) {
+                    Fragment f = fragments[i];
+                    renderer[i] = factory.StartNew (() => {
+                            byte[] dest = new byte[height * width * 4];
+                            RenderRange (scene, dest, width, height, f);
+                    return dest;
+                        }/*, TaskCreationOptions.LongRunning*/);
+                }
 
-            var renderer = new Task<byte[]>[4];
-            var factory = new TaskFactory();
-            renderer[0] = factory.StartNew (() => {
-                byte[] dest = new byte[height * width * 4];
-                RenderRange (scene, dest, width, height, 0, width/2, 0, height/2);
-                return dest;
-            }, TaskCreationOptions.LongRunning);
-            renderer[1] = factory.StartNew (() => {
-                byte[] dest = new byte[height * width * 4];
-                RenderRange (scene, dest, width, height, width/2, width, 0, height/2);
-                return dest;
-            }, TaskCreationOptions.LongRunning);
-            renderer[2] = factory.StartNew (() => {
-                byte[] dest = new byte[height * width * 4];
-                RenderRange (scene, dest, width, height, 0, width/2, height/2, height);
-                return dest;
-            }, TaskCreationOptions.LongRunning);
-            renderer[3] = factory.StartNew (() => {
-                byte[] dest = new byte[height * width * 4];
-                RenderRange (scene, dest, width, height, width/2, width, height/2, height);
-                return dest;
-            }, TaskCreationOptions.LongRunning);
+                byte[][] rendResult = await Task.WhenAll(renderer).ConfigureAwait(false);
 
-            byte[][] rendResult = await Task.WhenAll(renderer);
-
-            CopyRange (rgbaBytes.Span, width, height, rendResult[0], 0, width/2, 0, height/2);
-            CopyRange (rgbaBytes.Span, width, height, rendResult[1], width/2, width, 0, height/2);
-            CopyRange (rgbaBytes.Span, width, height, rendResult[2], 0, width/2, height/2, height);
-            CopyRange (rgbaBytes.Span, width, height, rendResult[3], width/2, width, height/2, height);
+                for (int i = 0; i < fragCount; i++) {
+                        CopyRange (rgbaBytes.Span, width, height, rendResult[i], fragments[i]);
+                }
         }
 
-        private void RenderRange (Scene scene, Span<byte> rgbaBytes, int width, int height, int xStart, int xEnd, int yStart, int yEnd)
+        internal struct Fragment {
+            public int XStart;
+            public int XEnd;
+            public int YStart;
+            public int YEnd;
+        }
+
+        private static void DumpFragment (string prefix, Fragment f) {
+            Console.WriteLine ($"{prefix} ({f.XStart}, {f.YStart})-({f.XEnd}, {f.YEnd})");
+        }
+        private static void DumpFragments (Fragment[] fragments)
         {
+            Console.WriteLine ($"Threre are {fragments.Length} fragments");
+            for (int i = 0; i < fragments.Length; i++) {
+            Fragment f = fragments[i];
+            DumpFragment($"Fragment {i} ", f);
+            }
+        }
+
+        private static Fragment[] Divide (int width, int height, int hCount, int vCount)
+        {
+            Fragment[] fragments = new Fragment[hCount * vCount];
+            int fragWidth = width / hCount;
+            int fragHeight = height / vCount;
+            int frag = 0;
+            for (int curY = 0; curY < height; curY += fragHeight) {
+            int endY = curY + fragHeight;
+            endY = endY < height ? endY : height;
+            for (int curX = 0; curX < width; curX += fragWidth) {
+                int endX = curX + fragWidth;
+                endX = endX < width ? endX : width;
+                fragments[frag++] = new Fragment { XStart = curX, XEnd = endX, YStart = curY, YEnd = endY };
+            }
+            }
+            return fragments;
+        }
+
+        private void RenderRange (Scene scene, Span<byte> rgbaBytes, int width, int height, Fragment fragment)
+        {
+            DumpFragment ($"Worker {Environment.CurrentManagedThreadId} has fragment ", fragment);
+            int xStart = fragment.XStart;
+            int xEnd = fragment.XEnd;
+            int yStart = fragment.YStart;
+            int yEnd = fragment.YEnd;
             for (int y = yStart; y < yEnd; y++)
             {
                 for (int x = xStart; x < xEnd; x++)
@@ -144,6 +175,9 @@ namespace RayTracer
                     var color = TraceRayAgainstScene(GetRay(viewPortX, viewPortY), scene);
 
                     var red = 4 * (width * (height - y - 1) + x);
+                    if (red + 3 >= rgbaBytes.Length) {
+                        Console.WriteLine ($"out of bounds in worker {Environment.CurrentManagedThreadId} at ({x},{y})");
+                    }
                     rgbaBytes[red] = (byte)(color.R * 255);
                     rgbaBytes[red + 1] = (byte)(color.G * 255);
                     rgbaBytes[red + 2] = (byte)(color.B * 255);
@@ -152,8 +186,12 @@ namespace RayTracer
             }
         }
 
-        private static void CopyRange (Span<byte> dest, int width, int height, ReadOnlySpan<byte> src, int xStart, int xEnd, int yStart, int yEnd)
+        private static void CopyRange (Span<byte> dest, int width, int height, ReadOnlySpan<byte> src, Fragment fragment)
         {
+            int xStart = fragment.XStart;
+            int xEnd = fragment.XEnd;
+            int yStart = fragment.YStart;
+            int yEnd = fragment.YEnd;
             for (int y = yStart; y < yEnd; y++) {
             for (int x = xStart; x < xEnd; x++) {
                 int offset = 4 * (width * (height - y - 1) + x);
