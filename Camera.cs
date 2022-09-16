@@ -89,7 +89,7 @@ namespace RayTracer
         /// </summary>
         /// <param name="scene">The scene to render</param>
         /// <returns>A bitmap of the rendered scene.</returns>
-        public async Task<byte[]> RenderScene(Scene scene, int width = -1, int height = -1)
+        public async Task RenderScene(Scene scene, Memory<byte> rgbaBytes, int width = -1, int height = -1)
         {
             if (width == -1 || height == -1)
             {
@@ -102,61 +102,70 @@ namespace RayTracer
             }
 
 
-	    var renderer = new Task<byte[]>[4];
-	    var factory = new TaskFactory();
-	    renderer[0] = factory.StartNew (() => RenderRange (scene, width, height, 0, width/2, 0, height/2), TaskCreationOptions.LongRunning);
-	    renderer[1] = factory.StartNew (() => RenderRange (scene, width, height, width/2, width, 0, height/2), TaskCreationOptions.LongRunning);
-	    renderer[2] = factory.StartNew (() => RenderRange (scene, width, height, 0, width/2, height/2, height), TaskCreationOptions.LongRunning);
-	    renderer[3] = factory.StartNew (() => RenderRange (scene, width, height, width/2, width, height/2, height), TaskCreationOptions.LongRunning);
+            var renderer = new Task<byte[]>[4];
+            var factory = new TaskFactory();
+            renderer[0] = factory.StartNew (() => {
+                byte[] dest = new byte[height * width * 4];
+                RenderRange (scene, dest, width, height, 0, width/2, 0, height/2);
+                return dest;
+            }, TaskCreationOptions.LongRunning);
+            renderer[1] = factory.StartNew (() => {
+                byte[] dest = new byte[height * width * 4];
+                RenderRange (scene, dest, width, height, width/2, width, 0, height/2);
+                return dest;
+            }, TaskCreationOptions.LongRunning);
+            renderer[2] = factory.StartNew (() => {
+                byte[] dest = new byte[height * width * 4];
+                RenderRange (scene, dest, width, height, 0, width/2, height/2, height);
+                return dest;
+            }, TaskCreationOptions.LongRunning);
+            renderer[3] = factory.StartNew (() => {
+                byte[] dest = new byte[height * width * 4];
+                RenderRange (scene, dest, width, height, width/2, width, height/2, height);
+                return dest;
+            }, TaskCreationOptions.LongRunning);
 
-	    byte[][] rendResult = await Task.WhenAll(renderer);
+            byte[][] rendResult = await Task.WhenAll(renderer);
 
-            var rgbaBytes = new byte[height * width * 4];
-
-	    CopyRange (rgbaBytes, width, height, rendResult[0], 0, width/2, 0, height/2);
-	    CopyRange (rgbaBytes, width, height, rendResult[1], width/2, width, 0, height/2);
-	    CopyRange (rgbaBytes, width, height, rendResult[2], 0, width/2, height/2, height);
-	    CopyRange (rgbaBytes, width, height, rendResult[3], width/2, width, height/2, height);
-
-            return rgbaBytes;
+            CopyRange (rgbaBytes.Span, width, height, rendResult[0], 0, width/2, 0, height/2);
+            CopyRange (rgbaBytes.Span, width, height, rendResult[1], width/2, width, 0, height/2);
+            CopyRange (rgbaBytes.Span, width, height, rendResult[2], 0, width/2, height/2, height);
+            CopyRange (rgbaBytes.Span, width, height, rendResult[3], width/2, width, height/2, height);
         }
 
-	private byte[] RenderRange (Scene scene, int width, int height, int xStart, int xEnd, int yStart, int yEnd)
-	{
-	    byte[] rgbaBytes = new byte[height * width * 4];
-	    for (int y = yStart; y < yEnd; y++)
-	    {
-		for (int x = xStart; x < xEnd; x++)
-		{
+        private void RenderRange (Scene scene, Span<byte> rgbaBytes, int width, int height, int xStart, int xEnd, int yStart, int yEnd)
+        {
+            for (int y = yStart; y < yEnd; y++)
+            {
+                for (int x = xStart; x < xEnd; x++)
+                {
                     var viewPortX = ((2 * x) / (float)width) - 1;
                     var viewPortY = ((2 * y) / (float)height) - 1;
                     var color = TraceRayAgainstScene(GetRay(viewPortX, viewPortY), scene);
 
                     var red = 4 * (width * (height - y - 1) + x);
-                    rgbaBytes[red] = (byte)(color.R * 256);
-                    rgbaBytes[red + 1] = (byte)(color.G * 256);
-                    rgbaBytes[red + 2] = (byte)(color.B * 256);
+                    rgbaBytes[red] = (byte)(color.R * 255);
+                    rgbaBytes[red + 1] = (byte)(color.G * 255);
+                    rgbaBytes[red + 2] = (byte)(color.B * 255);
                     rgbaBytes[red + 3] = 255;
                 }
             }
-	    return rgbaBytes;
-	}
+        }
 
-	private void CopyRange (byte[] dest, int width, int height, byte[] src, int xStart, int xEnd, int yStart, int yEnd)
-	{
-	    for (int y = yStart; y < yEnd; y++) {
-		for (int x = xStart; x < xEnd; x++) {
-		    int offset = 4 * (width * (height - y - 1) + x);
-		    for (int c = 0; c < 4; c++)
-			dest[offset + c] = src[offset + c];
-		}
-	    }
-	}
+        private static void CopyRange (Span<byte> dest, int width, int height, ReadOnlySpan<byte> src, int xStart, int xEnd, int yStart, int yEnd)
+        {
+            for (int y = yStart; y < yEnd; y++) {
+            for (int x = xStart; x < xEnd; x++) {
+                int offset = 4 * (width * (height - y - 1) + x);
+                for (int c = 0; c < 4; c++)
+                dest[offset + c] = src[offset + c];
+            }
+            }
+        }
 
         private Color TraceRayAgainstScene(Ray ray, Scene scene)
         {
-            Intersection intersection;
-            if (TryCalculateIntersection(ray, scene, null, out intersection))
+            if (TryCalculateIntersection(ray, scene, null, out Intersection intersection))
             {
                 return CalculateRecursiveColor(intersection, scene, 0);
             }

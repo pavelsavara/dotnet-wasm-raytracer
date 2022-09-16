@@ -21,9 +21,12 @@ public partial class MainJS
         Console.WriteLine ("Rendering started");
 
         Scene scene = Scene.TwoPlanes;
+        const int width = 640;
+        const int height = 480;
         scene.Camera.ReflectionDepth = 5;
         scene.Camera.FieldOfView = 120;
-        var canvasRGBA = await scene.Camera.RenderScene(scene, 640, 480);
+        byte[] canvasRGBA = new byte[width * height * 4];
+        await scene.Camera.RenderScene(scene, canvasRGBA, width, height);
 
         Console.WriteLine ("Rendering finished in "+ (DateTime.UtcNow - now).TotalMilliseconds+ " ms");
         RenderCanvas(canvasRGBA);
