@@ -104,22 +104,15 @@ namespace RayTracer
             var stripes = Divide (height, 4);
             DumpStripes (stripes);
             var fragCount = stripes.Length;
-                var renderer = new Task<byte[]>[fragCount];
+                var renderer = new Task[fragCount];
                 var factory = new TaskFactory();
                 for (int i = 0; i < fragCount; i++) {
                     Stripe f = stripes[i];
-                    renderer[i] = factory.StartNew (() => {
-                            byte[] dest = new byte[height * width * 4];
-                            RenderRange (scene, dest, width, height, f);
-                    return dest;
-                        }, TaskCreationOptions.LongRunning);
+                    renderer[i] = factory.StartNew (() => RenderRange (scene, rgbaBytes.Span, width, height, f),
+                                                    TaskCreationOptions.LongRunning);
                 }
 
-                byte[][] rendResult = await Task.WhenAll(renderer).ConfigureAwait(false);
-
-                for (int i = 0; i < fragCount; i++) {
-                        CopyRange (rgbaBytes.Span, width, height, rendResult[i], stripes[i]);
-                }
+                await Task.WhenAll(renderer).ConfigureAwait(false);
         }
 
         // A region of the final image constrained to a rectangle from (0, YStart) to (Width, YEnd)
@@ -161,7 +154,12 @@ namespace RayTracer
             int xEnd = width;
             int yStart = fragment.YStart;
             int yEnd = fragment.YEnd;
-            for (int y = yStart; y < yEnd; y++)
+            // go in byte buffer order, not image order
+            int sliceOffset = 4 * width * (height - yEnd);
+            var byteLength = 4 * width * (yEnd - yStart);
+            var dest = rgbaBytes.Slice (sliceOffset, byteLength); 
+            int offset = 0;
+            for (int y = yEnd - 1; y >= yStart; y--)
             {
                 for (int x = xStart; x < xEnd; x++)
                 {
@@ -169,30 +167,11 @@ namespace RayTracer
                     var viewPortY = ((2 * y) / (float)height) - 1;
                     var color = TraceRayAgainstScene(GetRay(viewPortX, viewPortY), scene);
 
-                    var red = 4 * (width * (height - y - 1) + x);
-                    if (red + 3 >= rgbaBytes.Length) {
-                        Console.WriteLine ($"out of bounds in worker {Environment.CurrentManagedThreadId} at ({x},{y})");
-                    }
-                    rgbaBytes[red] = (byte)(color.R * 255);
-                    rgbaBytes[red + 1] = (byte)(color.G * 255);
-                    rgbaBytes[red + 2] = (byte)(color.B * 255);
-                    rgbaBytes[red + 3] = 255;
+                    dest[offset++] = (byte)(color.R * 255);
+                    dest[offset++] = (byte)(color.G * 255);
+                    dest[offset++] = (byte)(color.B * 255);
+                    dest[offset++] = 255;
                 }
-            }
-        }
-
-        private static void CopyRange (Span<byte> dest, int width, int height, ReadOnlySpan<byte> src, Stripe fragment)
-        {
-            int xStart = 0;
-            int xEnd = width;
-            int yStart = fragment.YStart;
-            int yEnd = fragment.YEnd;
-            for (int y = yStart; y < yEnd; y++) {
-                for (int x = xStart; x < xEnd; x++) {
-                    int offset = 4 * (width * (height - y - 1) + x);
-                    for (int c = 0; c < 4; c++)
-                        dest[offset + c] = src[offset + c];
-                }   
             }
         }
 
