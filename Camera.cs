@@ -102,7 +102,6 @@ namespace RayTracer
             }
 
             var stripes = Divide (height, 4);
-            DumpStripes (stripes);
             var fragCount = stripes.Length;
                 var renderer = new Task[fragCount];
                 var factory = new TaskFactory();
@@ -126,14 +125,6 @@ namespace RayTracer
             }
         }
 
-        private static void DumpStripes (Stripe[] stripes)
-        {
-            Console.WriteLine ($"Threre are {stripes.Length} stripes");
-            for (int i = 0; i < stripes.Length; i++) {
-                Console.WriteLine($"{i}: {stripes[i]}");
-            }
-        }
-
         private static Stripe[] Divide (int height, int vCount)
         {
             Stripe[] fragments = new Stripe[vCount];
@@ -149,7 +140,6 @@ namespace RayTracer
 
         private void RenderRange (Scene scene, Span<byte> rgbaBytes, int width, int height, Stripe fragment)
         {
-            Console.WriteLine ($"Worker {Environment.CurrentManagedThreadId} has stripe {fragment}");
             int xStart = 0;
             int xEnd = width;
             int yStart = fragment.YStart;
