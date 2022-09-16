@@ -6,14 +6,31 @@ using System.Threading.Tasks;
 
 public partial class MainJS
 {
+    struct SceneEnvironment {
+        public int Width;
+        public int Height;
+        public byte[] rgbaRenderBuffer;
+    }
+
+    static SceneEnvironment sceneEnvironment;
 
     public static void Main()
     {
         Console.WriteLine ("Hello, World!");
     }
 
+    [JSExport]
+    [return: JSMarshalAs<JSType.MemoryView>]
+    internal static ArraySegment<byte> PrepareToRender(int sceneWidth, int sceneHeight)
+    {
+        sceneEnvironment.Width = sceneWidth;
+        sceneEnvironment.Height = sceneHeight;
+        sceneEnvironment.rgbaRenderBuffer = new byte[sceneWidth * sceneHeight * 4];
+        return sceneEnvironment.rgbaRenderBuffer;
+    }
+
     [JSImport("renderCanvas", "main.js")]
-    internal static partial void RenderCanvas([JSMarshalAs<JSType.MemoryView>] ArraySegment<byte> rgba);
+    internal static partial void RenderCanvas();
 
     [JSImport("setOutText", "main.js")]
     internal static partial void SetOutText(string text);
@@ -30,16 +47,13 @@ public partial class MainJS
         SetOutText(text);
 
         Scene scene = Scene.TwoPlanes;
-        const int width = 640;
-        const int height = 480;
         scene.Camera.ReflectionDepth = 5;
         scene.Camera.FieldOfView = 120;
-        byte[] canvasRGBA = new byte[width * height * 4];
-        await scene.Camera.RenderScene(scene, canvasRGBA, width, height);
+        await scene.Camera.RenderScene(scene, sceneEnvironment.rgbaRenderBuffer, sceneEnvironment.Width, sceneEnvironment.Height);
 
         text = $"Rendering finished in {(DateTime.UtcNow - now).TotalMilliseconds} ms";
         Console.WriteLine(text);
         SetOutText(text);
-        RenderCanvas(canvasRGBA);
+        RenderCanvas();
     }
 }

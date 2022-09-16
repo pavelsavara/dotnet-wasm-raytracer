@@ -17,12 +17,11 @@ function drawWaitingForRendering(canvas) {
     ctx.restore();
 }
 
-function renderCanvas(rgbaView) {
+function renderCanvas() {
     const ctx = canvas.getContext('2d');
     const clamped = new Uint8ClampedArray(rgbaView.slice());
-    const image = new ImageData(clamped, 640, 480);
+    const image = new ImageData(clamped, canvas.width, canvas.height);
     ctx.putImageData(image, 0, 0);
-    rgbaView.dispose();
     canvas.style = "";
 }
 
@@ -36,11 +35,17 @@ const config = getConfig();
 const exports = await getAssemblyExports(config.mainAssemblyName);
 const canvas = document.getElementById("out");
 const outText = document.getElementById("outText");
+const btnRender = document.getElementById("btnRender");
+
 globalThis.onClick = async function () {
+    btnRender.disabled = true;
     drawWaitingForRendering(canvas);
     await exports.MainJS.OnClick();
+    btnRender.disabled = false;
 }
 
 await dotnet.run();
-const btnRender = document.getElementById("btnRender");
+const rgbaView = exports.MainJS.PrepareToRender(canvas.width, canvas.height);
 btnRender.disabled = false;
+
+// when done, call rgbaView.dispose();
