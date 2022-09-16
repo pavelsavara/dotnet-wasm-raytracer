@@ -3,8 +3,21 @@
 
 import { dotnet } from './dotnet.js'
 
+function drawWaitingForRendering(canvas) {
+    const ctx = canvas.getContext('2d');
+    ctx.save();
+    ctx.fillStyle = "rgba(255,255,255,0.7)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.restore();
+    ctx.save();
+    ctx.font = "bold 50px Arial sans-serif";
+    ctx.fillStyle = "darkred";
+    ctx.textAlign = "center";
+    ctx.fillText("Rendering...", canvas.width / 2, canvas.height / 2);
+    ctx.restore();
+}
+
 function renderCanvas(rgbaView) {
-    const canvas = document.getElementById("out");
     const ctx = canvas.getContext('2d');
     const clamped = new Uint8ClampedArray(rgbaView.slice());
     const image = new ImageData(clamped, 640, 480);
@@ -13,11 +26,18 @@ function renderCanvas(rgbaView) {
     canvas.style = "";
 }
 
+function setOutText(text) {
+    outText.innerText = text;
+}
+
 const { setModuleImports, getAssemblyExports, getConfig } = await dotnet.create();
-setModuleImports("main.js", { renderCanvas });
+setModuleImports("main.js", { renderCanvas, setOutText });
 const config = getConfig();
 const exports = await getAssemblyExports(config.mainAssemblyName);
+const canvas = document.getElementById("out");
+const outText = document.getElementById("outText");
 globalThis.onClick = async function () {
+    drawWaitingForRendering(canvas);
     await exports.MainJS.OnClick();
 }
 
