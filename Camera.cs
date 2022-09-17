@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Runtime.Intrinsics;
 using System.Threading.Tasks;
+using System.Threading;
 
 namespace RayTracer
 {
@@ -84,11 +85,10 @@ namespace RayTracer
         }
 
         /// <summary>
-        /// Renders the given scene in a background thread. Uses a single thread for rendering.
-        /// </summary>
+        /// Renders the given scene in a background thread.
         /// <param name="scene">The scene to render</param>
         /// <returns>A bitmap of the rendered scene.</returns>
-        public byte[] RenderScene(Scene scene, int width = -1, int height = -1)
+        public async Task RenderScene(Scene scene, byte[] rgbaBytes, int width = -1, int height = -1)
         {
             if (width == -1 || height == -1)
             {
@@ -100,32 +100,94 @@ namespace RayTracer
                 renderSize = new Size(width, height);
             }
 
-            var rgbaBytes = new byte[height * width * 4];
-
-            for (int x = 0; x < width; x++)
+#if USE_THREADS
+            var stripes = Divide (height, 4);
+            var fragCount = stripes.Length;
+            var renderer = new Task[fragCount];
+            var buffers = new ArraySegment<byte>[fragCount];
+            var factory = new TaskFactory();
+            for (int i = 0; i < fragCount; i++)
             {
-                for (int y = 0; y < height; y++)
+                Stripe f = stripes[i];
+                ArraySegment<byte> dest = buffers[i] = SliceForStripe(rgbaBytes, width, height, f);
+                renderer[i] = factory.StartNew (() => RenderRange (scene, dest, width, height, f),
+                                                TaskCreationOptions.LongRunning);
+            }
+            await Task.WhenAll(renderer).ConfigureAwait(false);
+#else
+            await Task.CompletedTask;
+            RenderRange(scene, rgbaBytes, width, height, new Stripe {YStart = 0, YEnd = height});
+#endif
+        }
+
+        // A region of the final image constrained to a rectangle from (0, YStart) to (Width, YEnd)
+        internal struct Stripe
+        {
+            public int YStart;
+            public int YEnd;
+
+            public override string ToString()
+            {
+                return $"stripe {YStart} - {YEnd}";
+            }
+        }
+
+
+#if USE_THREADS
+        private static ArraySegment<byte> BufferForStripe(int width, Stripe stripe)
+        {
+            return new ArraySegment<byte>(new byte[width * (stripe.YEnd - stripe.YStart) * 4]);
+        }
+
+        private static ArraySegment<byte> SliceForStripe(byte[] rgbaBytes, int width, int height, Stripe stripe)
+        {
+            int sliceOffset = 4 * width * (height - stripe.YEnd);
+            var byteLength = 4 * width * (stripe.YEnd - stripe.YStart);
+            return new ArraySegment<byte>(rgbaBytes, sliceOffset, byteLength); 
+        }
+
+        private static Stripe[] Divide (int height, int vCount)
+        {
+            Stripe[] fragments = new Stripe[vCount];
+            int fragHeight = height / vCount;
+            int frag = 0;
+            for (int curY = 0; curY < height; curY += fragHeight) {
+                int endY = curY + fragHeight;
+                endY = endY < height ? endY : height;
+                fragments[frag++] = new Stripe { YStart = curY, YEnd = endY };
+            }
+            return fragments;
+        }
+#endif
+
+        private void RenderRange (Scene scene, ArraySegment<byte> rgbaBytes, int width, int height, Stripe fragment)
+        {
+            int xStart = 0;
+            int xEnd = width;
+            int yStart = fragment.YStart;
+            int yEnd = fragment.YEnd;
+            // go in byte buffer order, not image order
+            int offset = rgbaBytes.Offset;
+            byte[] dest = rgbaBytes.Array;
+            for (int y = yEnd - 1; y >= yStart; y--)
+            {
+                for (int x = xStart; x < xEnd; x++)
                 {
                     var viewPortX = ((2 * x) / (float)width) - 1;
                     var viewPortY = ((2 * y) / (float)height) - 1;
                     var color = TraceRayAgainstScene(GetRay(viewPortX, viewPortY), scene);
 
-                    var red = 4 * (width * (height - y - 1) + x);
-                    rgbaBytes[red] = (byte)(color.R * 256);
-                    rgbaBytes[red + 1] = (byte)(color.G * 256);
-                    rgbaBytes[red + 2] = (byte)(color.B * 256);
-                    rgbaBytes[red + 3] = 255;
+                    dest[offset++] = (byte)(color.R * 255);
+                    dest[offset++] = (byte)(color.G * 255);
+                    dest[offset++] = (byte)(color.B * 255);
+                    dest[offset++] = 255;
                 }
             }
-
-            return rgbaBytes;
         }
-
 
         private Color TraceRayAgainstScene(Ray ray, Scene scene)
         {
-            Intersection intersection;
-            if (TryCalculateIntersection(ray, scene, null, out intersection))
+            if (TryCalculateIntersection(ray, scene, null, out Intersection intersection))
             {
                 return CalculateRecursiveColor(intersection, scene, 0);
             }

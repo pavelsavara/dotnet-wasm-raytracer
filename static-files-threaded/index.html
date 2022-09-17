@@ -12,11 +12,12 @@
 </head>
 
 <body>
-  <h1>Raytracer demo on Net7 wasm</h1>
+  <h1>Threaded raytracer demo on Net7 wasm</h1>
   <button id="btnRender" onclick="globalThis.onClick()" disabled="true">Render</button>
   <br /><br />
   <canvas id="out" width="640" height="480" style="border: dotted;"></canvas>
   <div id="outText"></div>
+  <script src="./coi-serviceworker.min.js"></script>
   <script type='module' src="./main.js"></script>
   <br /><br />
   <p>
