@@ -7,16 +7,15 @@
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<LangVersion>preview</LangVersion>
 		<PublishTrimmed>true</PublishTrimmed>
-		<TrimMode>full</TrimMode>
+		<TrimMode>link</TrimMode>
 		<RunAOTCompilation>true</RunAOTCompilation>
 		<WasmEnableSIMD>true</WasmEnableSIMD>
 	</PropertyGroup>
 	<ItemGroup>
-		<WasmExtraFilesToDeploy Include="index.html" />
 		<WasmExtraFilesToDeploy Include="main.js" />
 	</ItemGroup>
-	<PropertyGroup>
-		<DefineConstants Condition="'$(WasmEnableThreads)' == 'true'">$(DefineConstants);USE_THREADS</DefineConstants>
+	<PropertyGroup Condition="'$(WasmEnableThreads)' == 'true'">
+		<DefineConstants>$(DefineConstants);USE_THREADS</DefineConstants>
 	</PropertyGroup>
 
 	<Target Name="Note" BeforeTargets="Build">
@@ -27,4 +26,13 @@
 		</PropertyGroup>
 		<Message Importance="high" Text="Compiling with $(PrivWasmEnableThreadsMsg)" />
 	</Target>
+
+	<ItemGroup Condition="'$(WasmEnableThreads)' != 'true'">
+		<WasmExtraFilesToDeploy Include="index.html" />
+	</ItemGroup>
+	<ItemGroup Condition="'$(WasmEnableThreads)' == 'true'">
+		<WasmExtraFilesToDeploy Include="static-files-threaded/index.html" />
+		<WasmExtraFilesToDeploy Include="static-files-threaded/coi-serviceworker.min.js" />
+	</ItemGroup>
+
 </Project>
