@@ -88,7 +88,7 @@ namespace RayTracer
         /// Renders the given scene in a background thread.
         /// <param name="scene">The scene to render</param>
         /// <returns>A bitmap of the rendered scene.</returns>
-        public async Task RenderScene(Scene scene, Memory<byte> rgbaBytes, int width = -1, int height = -1)
+        public async Task RenderScene(Scene scene, byte[] rgbaBytes, int width = -1, int height = -1)
         {
             if (width == -1 || height == -1)
             {
@@ -104,25 +104,19 @@ namespace RayTracer
             var stripes = Divide (height, 4);
             var fragCount = stripes.Length;
             var renderer = new Task[fragCount];
-            var buffers = new Memory<byte>[fragCount];
+            var buffers = new ArraySegment<byte>[fragCount];
             var factory = new TaskFactory();
             for (int i = 0; i < fragCount; i++)
             {
                 Stripe f = stripes[i];
-                Memory<byte> dest = buffers[i] = /*SliceForStripe(rgbaBytes, width, height, f)*/ BufferForStripe(width, f);
-                renderer[i] = factory.StartNew (() => RenderRange (scene, dest.Span, width, height, f),
+                ArraySegment<byte> dest = buffers[i] = SliceForStripe(rgbaBytes, width, height, f);
+                renderer[i] = factory.StartNew (() => RenderRange (scene, dest, width, height, f),
                                                 TaskCreationOptions.LongRunning);
             }
             await Task.WhenAll(renderer).ConfigureAwait(false);
-
-            for (int i = 0; i < fragCount; i++)
-            {
-                Memory<byte> dest = SliceForStripe(rgbaBytes, width, height, stripes[i]);
-                buffers[i].CopyTo(dest);
-            }
 #else
             await Task.CompletedTask;
-            RenderRange(scene, rgbaBytes.Span, width, height, new Stripe {YStart = 0, YEnd = height});
+            RenderRange(scene, rgbaBytes, width, height, new Stripe {YStart = 0, YEnd = height});
 #endif
         }
 
@@ -140,16 +134,16 @@ namespace RayTracer
 
 
 #if USE_THREADS
-        private static Memory<byte> BufferForStripe(int width, Stripe stripe)
+        private static ArraySegment<byte> BufferForStripe(int width, Stripe stripe)
         {
-            return new Memory<byte>(new byte[width * (stripe.YEnd - stripe.YStart) * 4]);
+            return new ArraySegment<byte>(new byte[width * (stripe.YEnd - stripe.YStart) * 4]);
         }
 
-        private static Memory<byte> SliceForStripe(Memory<byte> rgbaBytes, int width, int height, Stripe stripe)
+        private static ArraySegment<byte> SliceForStripe(byte[] rgbaBytes, int width, int height, Stripe stripe)
         {
             int sliceOffset = 4 * width * (height - stripe.YEnd);
             var byteLength = 4 * width * (stripe.YEnd - stripe.YStart);
-            return rgbaBytes.Slice (sliceOffset, byteLength); 
+            return new ArraySegment<byte>(rgbaBytes, sliceOffset, byteLength); 
         }
 
         private static Stripe[] Divide (int height, int vCount)
@@ -166,14 +160,15 @@ namespace RayTracer
         }
 #endif
 
-        private void RenderRange (Scene scene, Span<byte> rgbaBytes, int width, int height, Stripe fragment)
+        private void RenderRange (Scene scene, ArraySegment<byte> rgbaBytes, int width, int height, Stripe fragment)
         {
             int xStart = 0;
             int xEnd = width;
             int yStart = fragment.YStart;
             int yEnd = fragment.YEnd;
             // go in byte buffer order, not image order
-            int offset = 0;
+            int offset = rgbaBytes.Offset;
+            byte[] dest = rgbaBytes.Array;
             for (int y = yEnd - 1; y >= yStart; y--)
             {
                 for (int x = xStart; x < xEnd; x++)
@@ -182,10 +177,10 @@ namespace RayTracer
                     var viewPortY = ((2 * y) / (float)height) - 1;
                     var color = TraceRayAgainstScene(GetRay(viewPortX, viewPortY), scene);
 
-                    rgbaBytes[offset++] = (byte)(color.R * 255);
-                    rgbaBytes[offset++] = (byte)(color.G * 255);
-                    rgbaBytes[offset++] = (byte)(color.B * 255);
-                    rgbaBytes[offset++] = 255;
+                    dest[offset++] = (byte)(color.R * 255);
+                    dest[offset++] = (byte)(color.G * 255);
+                    dest[offset++] = (byte)(color.B * 255);
+                    dest[offset++] = 255;
                 }
             }
         }
