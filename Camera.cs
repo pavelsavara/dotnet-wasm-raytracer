@@ -104,14 +104,22 @@ namespace RayTracer
             var stripes = Divide (height, 4);
             var fragCount = stripes.Length;
             var renderer = new Task[fragCount];
+            var buffers = new Memory<byte>[fragCount];
             var factory = new TaskFactory();
             for (int i = 0; i < fragCount; i++)
             {
                 Stripe f = stripes[i];
-                renderer[i] = factory.StartNew (() => RenderRange (scene, rgbaBytes.Span, width, height, f),
+                Memory<byte> dest = buffers[i] = /*SliceForStripe(rgbaBytes, width, height, f)*/ BufferForStripe(width, f);
+                renderer[i] = factory.StartNew (() => RenderRange (scene, dest.Span, width, height, f),
                                                 TaskCreationOptions.LongRunning);
             }
             await Task.WhenAll(renderer).ConfigureAwait(false);
+
+            for (int i = 0; i < fragCount; i++)
+            {
+                Memory<byte> dest = SliceForStripe(rgbaBytes, width, height, stripes[i]);
+                buffers[i].CopyTo(dest);
+            }
 #else
             await Task.CompletedTask;
             RenderRange(scene, rgbaBytes.Span, width, height, new Stripe {YStart = 0, YEnd = height});
@@ -130,7 +138,20 @@ namespace RayTracer
             }
         }
 
+
 #if USE_THREADS
+        private static Memory<byte> BufferForStripe(int width, Stripe stripe)
+        {
+            return new Memory<byte>(new byte[width * (stripe.YEnd - stripe.YStart) * 4]);
+        }
+
+        private static Memory<byte> SliceForStripe(Memory<byte> rgbaBytes, int width, int height, Stripe stripe)
+        {
+            int sliceOffset = 4 * width * (height - stripe.YEnd);
+            var byteLength = 4 * width * (stripe.YEnd - stripe.YStart);
+            return rgbaBytes.Slice (sliceOffset, byteLength); 
+        }
+
         private static Stripe[] Divide (int height, int vCount)
         {
             Stripe[] fragments = new Stripe[vCount];
@@ -152,9 +173,6 @@ namespace RayTracer
             int yStart = fragment.YStart;
             int yEnd = fragment.YEnd;
             // go in byte buffer order, not image order
-            int sliceOffset = 4 * width * (height - yEnd);
-            var byteLength = 4 * width * (yEnd - yStart);
-            var dest = rgbaBytes.Slice (sliceOffset, byteLength); 
             int offset = 0;
             for (int y = yEnd - 1; y >= yStart; y--)
             {
@@ -164,10 +182,10 @@ namespace RayTracer
                     var viewPortY = ((2 * y) / (float)height) - 1;
                     var color = TraceRayAgainstScene(GetRay(viewPortX, viewPortY), scene);
 
-                    dest[offset++] = (byte)(color.R * 255);
-                    dest[offset++] = (byte)(color.G * 255);
-                    dest[offset++] = (byte)(color.B * 255);
-                    dest[offset++] = 255;
+                    rgbaBytes[offset++] = (byte)(color.R * 255);
+                    rgbaBytes[offset++] = (byte)(color.G * 255);
+                    rgbaBytes[offset++] = (byte)(color.B * 255);
+                    rgbaBytes[offset++] = 255;
                 }
             }
         }
