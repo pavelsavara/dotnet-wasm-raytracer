@@ -1,0 +1,39 @@
+{
+  "mainAssemblyName": "RayTracer",
+  "resources": {
+    "hash": "sha256-ku3gCg0vbLQxGP8X/GekX111oZ8Y0FrSzEsKNrfnagQ=",
+    "jsModuleWorker": {
+      "dotnet.native.worker.9.0.0-preview.3.24172.9.7hp0thhvz2.js": "sha256-3+x+kXJb/61PXoN4tJy593GFv32kyYxrx7s+d5n/7cQ="
+    },
+    "jsModuleNative": {
+      "dotnet.native.9.0.0-preview.3.24172.9.q2cqgxwtga.js": "sha256-JWgrheJRyAxr2JbIuaNdaKfC2rUJz0RuLzfvMagIoF0="
+    },
+    "jsModuleRuntime": {
+      "dotnet.runtime.9.0.0-preview.3.24172.9.pjiwo67wcq.js": "sha256-GO2oJ/eay7/feW4sfnu9iNq6br94jp6NCL9X3Ejs/q8="
+    },
+    "wasmNative": {
+      "dotnet.native.wasm": "sha256-nSdS1HrXAXe+8vXYbBMjv1PNDyqoY9ziqYNF7W8HWhs="
+    },
+    "icu": {
+      "icudt_CJK.dat": "sha256-SZLtQnRc0JkwqHab0VUVP7T3uBPSeYzxzDnpxPpUnHk=",
+      "icudt_EFIGS.dat": "sha256-8fItetYY8kQ0ww6oxwTLiT3oXlBwHKumbeP2pRF4yTc=",
+      "icudt_no_CJK.dat": "sha256-L7sV7NEYP37/Qr2FPCePo5cJqRgTXRwGHuwF5Q+0Nfs="
+    },
+    "assembly": {
+      "RayTracer.wasm": "sha256-YoWLaN10ON0RvVQ4T65fWbEKD6Af+OAV1s2KPRMsSFQ=",
+      "System.ComponentModel.Primitives.wasm": "sha256-U2owTZ0McxOgzV1HsLGI+hoz/RsBNV2l8cFbqT02wTc=",
+      "System.ComponentModel.TypeConverter.wasm": "sha256-Akfv+SWw9PAhhgiFh9o9zpAoD1NeqTg1OOB102PBQ5w=",
+      "System.Console.wasm": "sha256-E+X9fXOfcskirj6Pt2qKX8HAQlOkQnY/fe94ZhKOtKo=",
+      "System.Drawing.Primitives.wasm": "sha256-zyUEUIAcpsKHD81lqFUyVL/MP+dnL+UmIhssmoe2xCI=",
+      "System.Drawing.wasm": "sha256-Qem+VX1AqVvIOjUJ1OyhZIu6EQjjUWEnnp0hBB8i5/c=",
+      "System.ObjectModel.wasm": "sha256-BoLPHuh72CzhT3r6epJ0hMmqyYmF84OJIBbko5HawhQ=",
+      "System.Private.CoreLib.wasm": "sha256-UltQUaaWiz2qddKzMwXnccacd3hZbsXwboY+9eh5U6M=",
+      "System.Runtime.InteropServices.JavaScript.wasm": "sha256-7CIu6KRr8QFzs6XO7LCnn87+4z3L8fZH5OXLCmd1slE=",
+      "System.Threading.Channels.wasm": "sha256-AvDFo9beNl63w/aLZF/B50U9aMsZlB0fkmM1+in6yGo="
+    }
+  },
+  "cacheBootResources": true,
+  "debugLevel": 0,
+  "linkerEnabled": true,
+  "globalizationMode": "sharded"
+}
