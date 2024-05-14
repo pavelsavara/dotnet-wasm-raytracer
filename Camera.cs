@@ -88,7 +88,7 @@ namespace RayTracer
         /// Renders the given scene in a background thread.
         /// <param name="scene">The scene to render</param>
         /// <returns>A bitmap of the rendered scene.</returns>
-        public async Task RenderScene(Scene scene, byte[] rgbaBytes, int width = -1, int height = -1)
+        public async Task RenderScene(Scene scene, byte[] rgbaBytes, int width = -1, int height = -1, int hardwareConcurrency = 1)
         {
             if (width == -1 || height == -1)
             {
@@ -100,8 +100,7 @@ namespace RayTracer
                 renderSize = new Size(width, height);
             }
 
-#if USE_THREADS
-            var stripes = Divide (height, 4);
+            var stripes = Divide (height, hardwareConcurrency);
             var fragCount = stripes.Length;
             var renderer = new Task[fragCount];
             var buffers = new ArraySegment<byte>[fragCount];
@@ -114,10 +113,6 @@ namespace RayTracer
                                                 TaskCreationOptions.LongRunning);
             }
             await Task.WhenAll(renderer).ConfigureAwait(false);
-#else
-            await Task.CompletedTask;
-            RenderRange(scene, rgbaBytes, width, height, new Stripe {YStart = 0, YEnd = height});
-#endif
         }
 
         // A region of the final image constrained to a rectangle from (0, YStart) to (Width, YEnd)
@@ -132,8 +127,6 @@ namespace RayTracer
             }
         }
 
-
-#if USE_THREADS
         private static ArraySegment<byte> BufferForStripe(int width, Stripe stripe)
         {
             return new ArraySegment<byte>(new byte[width * (stripe.YEnd - stripe.YStart) * 4]);
@@ -158,7 +151,6 @@ namespace RayTracer
             }
             return fragments;
         }
-#endif
 
         private void RenderRange (Scene scene, ArraySegment<byte> rgbaBytes, int width, int height, Stripe fragment)
         {

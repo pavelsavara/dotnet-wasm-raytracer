@@ -1,7 +1,7 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-import { dotnet } from './dotnet.js'
+import { dotnet } from './_framework/dotnet.js' 
 
 function drawWaitingForRendering(canvas) {
     const ctx = canvas.getContext('2d');
@@ -17,7 +17,7 @@ function drawWaitingForRendering(canvas) {
     ctx.restore();
 }
 
-function renderCanvas() {
+function renderCanvas(rgbaView) {
     const ctx = canvas.getContext('2d');
     const clamped = new Uint8ClampedArray(rgbaView.slice());
     const image = new ImageData(clamped, canvas.width, canvas.height);
@@ -32,6 +32,8 @@ function setOutText(text) {
 async function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
+
+
 
 const { setModuleImports, getAssemblyExports, getConfig } = await dotnet.create();
 setModuleImports("main.js", { renderCanvas, setOutText });
@@ -49,8 +51,7 @@ globalThis.onClick = async function () {
     btnRender.disabled = false;
 }
 
-await dotnet.run();
-const rgbaView = exports.MainJS.PrepareToRender(canvas.width, canvas.height);
 btnRender.disabled = false;
+await exports.MainJS.PrepareToRender(canvas.width, canvas.height, globalThis.navigator.hardwareConcurrency);
 
-// when done, call rgbaView.dispose();
+

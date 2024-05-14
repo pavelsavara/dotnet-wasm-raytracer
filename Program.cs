@@ -8,6 +8,7 @@ public partial class MainJS
     struct SceneEnvironment {
         public int Width;
         public int Height;
+        public int HardwareConcurrency;
         public byte[] rgbaRenderBuffer;
         public Scene Scene;
     }
@@ -28,18 +29,18 @@ public partial class MainJS
     }
 
     [JSExport]
-    [return: JSMarshalAs<JSType.MemoryView>]
-    internal static ArraySegment<byte> PrepareToRender(int sceneWidth, int sceneHeight)
+    internal static Task PrepareToRender(int sceneWidth, int sceneHeight, int hardwareConcurrency)
     {
         sceneEnvironment.Width = sceneWidth;
         sceneEnvironment.Height = sceneHeight;
+        sceneEnvironment.HardwareConcurrency = hardwareConcurrency;
         sceneEnvironment.Scene = ConfigureScene();
         sceneEnvironment.rgbaRenderBuffer = new byte[sceneWidth * sceneHeight * 4];
-        return sceneEnvironment.rgbaRenderBuffer;
+        return Task.CompletedTask;
     }
 
     [JSImport("renderCanvas", "main.js")]
-    internal static partial void RenderCanvas();
+    internal static partial void RenderCanvas([JSMarshalAs<JSType.MemoryView>] ArraySegment<byte> rgbaView);
 
 
     [JSImport("setOutText", "main.js")]
@@ -51,18 +52,14 @@ public partial class MainJS
         var now = DateTime.UtcNow;
         string text;
         text = "Rendering started";
-#if !USE_THREADS
         Console.WriteLine(text);
-#endif
         SetOutText(text);
 
-        await sceneEnvironment.Scene.Camera.RenderScene(sceneEnvironment.Scene, sceneEnvironment.rgbaRenderBuffer, sceneEnvironment.Width, sceneEnvironment.Height);
+        await sceneEnvironment.Scene.Camera.RenderScene(sceneEnvironment.Scene, sceneEnvironment.rgbaRenderBuffer, sceneEnvironment.Width, sceneEnvironment.Height, sceneEnvironment.HardwareConcurrency);
 
         text = $"Rendering finished in {(DateTime.UtcNow - now).TotalMilliseconds} ms";
-#if !USE_THREADS
         Console.WriteLine(text);
-#endif
         SetOutText(text);
-        RenderCanvas();
+        RenderCanvas(sceneEnvironment.rgbaRenderBuffer);
     }
 }
